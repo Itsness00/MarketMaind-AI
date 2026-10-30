@@ -514,63 +514,57 @@ requests>=2.32.0
 pytest>=8.3.0
 `,
   },
+  'start-marketmind.bat': {
+    filename: 'start-marketmind.bat',
+    desc: '1-Click Windows 11 launcher (auto-installs, configures .env, and opens browser)',
+    code: `@echo off
+title MarketMind AI — Midnight Market Edition (Gemma 4:31B Cloud)
+echo ============================================================================
+echo   MARKETMIND AI — MIDNIGHT MARKET EDITION
+echo   Hacktoberfest 2026 Open-Source AI Project
+echo   Powered by Google Gemma 4:31B Cloud and Ollama
+echo ============================================================================
+echo.
+
+if not exist ".env" (
+    if exist ".env.example" copy /Y ".env.example" ".env" >nul
+)
+
+if not exist "node_modules" (
+    echo Installing dependencies...
+    call npm install
+)
+
+echo Launching MarketMind AI on http://localhost:3000 ...
+start "" cmd /c "timeout /t 2 /nobreak >nul & start http://localhost:3000"
+call npm run dev
+pause
+`,
+  },
   'README.md': {
     filename: 'README.md',
-    desc: 'Hacktoberfest 2026 documentation, setup guide, and 2-minute demo script',
+    desc: '1-Click Quickstart guide and 2-minute Hacktoberfest demo script',
     code: `# MarketMind AI — Midnight Market Edition
 ### Hacktoberfest 2026 Open-Source AI Project
 **Tagline:** *"Read the Signal. Question the Noise."*
 
-MarketMind AI is an open-source financial intelligence assistant engineered to help analysts, students, and researchers evaluate financial market series, compute mathematical risk indicators, and generate structured AI research memoranda using **Google Gemma 4** and **Ollama**.
+MarketMind AI is an open-source financial intelligence assistant engineered to help analysts, students, and researchers evaluate financial market series, compute mathematical risk indicators, and generate structured AI research memoranda using **Google Gemma 4:31B Cloud** and **Ollama**.
 
 ---
 
-## 🎃 What Problem MarketMind AI Solves
-Financial data analysis is often fragmented: spreadsheet calculations lack natural language synthesis, while generic LLMs hallucinate inaccurate stock prices and fake percentages.
+## ⚡ 1-Click / 1-Line Instant Launch (No Long Commands!)
 
-MarketMind AI decouples calculation from narrative:
-1. **Deterministic Calculation:** All returns, SMAs, volatility, max drawdowns, and Value-at-Risk are computed with explicit mathematical formulas.
-2. **Grounded AI Synthesis:** Verified metrics are injected into Google Gemma 4 via Ollama using a disciplined financial research analyst persona.
-3. **Zero Financial Hallucination:** The model interprets verified data rather than guessing stock numbers.
-
----
-
-## 🚀 Quickstart Guide (Windows 11 / Linux / macOS)
-
-### 1. Prerequisites
-- **Python 3.11+** installed
-- **Ollama** installed: [ollama.com](https://ollama.com)
-
-### 2. Run Gemma 4:31B Cloud via Ollama
-Open PowerShell or Windows Terminal (authenticated session):
-\`\`\`bash
-ollama run gemma4:31b-cloud
-\`\`\`
-*(Ollama connects to Google Gemma 4:31B Cloud through your authenticated session at \`http://127.0.0.1:11434\`)*
-
-### 3. Clone and Install Dependencies
-\`\`\`bash
-git clone https://github.com/marketmind-ai/marketmind-ai.git
-cd marketmind-ai
-
-# Create virtual environment
-python -m venv venv
-venv\\Scripts\\activate  # On Windows
-# or: source venv/bin/activate  # On Linux/macOS
-
-pip install -r requirements.txt
+### Option 1: Copy & Paste 1 Line in Windows Terminal / PowerShell
+\`\`\`powershell
+git clone https://github.com/marketmind-ai/marketmind-ai.git && cd marketmind-ai && start-marketmind.bat
 \`\`\`
 
-### 4. Run Tests
-\`\`\`bash
-pytest tests/
-\`\`\`
+### Option 2: Double-Click Launcher (After Downloading ZIP)
+Simply double-click **\`start-marketmind.bat\`** in the project folder! It automatically sets up \`.env\`, installs dependencies, connects to your local Ollama (\`gemma4:31b-cloud\`), and opens \`http://localhost:3000\` in your web browser.
 
-### 5. Launch Application
+### Option 3: Already in the Folder? Copy 1 Short Command
 \`\`\`bash
-streamlit run app.py
-# Or launch Node.js Full-Stack Web App:
-npm install && npm run dev
+npm run launch
 \`\`\`
 
 ---
@@ -594,17 +588,24 @@ export const HacktoberfestModal: React.FC<HacktoberfestModalProps> = ({
   onClose,
   isHalloween,
 }) => {
-  const [activeFileKey, setActiveFileKey] = useState<string>('app.py');
+  const [activeFileKey, setActiveFileKey] = useState<string>('README.md');
   const [copied, setCopied] = useState(false);
+  const [copiedQuickCmd, setCopiedQuickCmd] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const currentFile = PYTHON_CODE_FILES[activeFileKey];
+  const currentFile = PYTHON_CODE_FILES[activeFileKey] || PYTHON_CODE_FILES['README.md'];
 
   const handleCopy = () => {
     navigator.clipboard.writeText(currentFile.code);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleCopyQuickCommand = (id: string, cmd: string) => {
+    navigator.clipboard.writeText(cmd);
+    setCopiedQuickCmd(id);
+    setTimeout(() => setCopiedQuickCmd(null), 2000);
   };
 
   const handleDownload = () => {
@@ -618,9 +619,12 @@ export const HacktoberfestModal: React.FC<HacktoberfestModalProps> = ({
     document.body.removeChild(link);
   };
 
+  const oneLineCloneCmd = 'git clone https://github.com/marketmind-ai/marketmind-ai.git && cd marketmind-ai && start-marketmind.bat';
+  const oneWordRunCmd = 'npm run launch';
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-md">
-      <div className="w-full max-w-5xl h-[88vh] rounded-2xl bg-[#161920] border border-white/15 p-6 shadow-2xl flex flex-col space-y-4">
+      <div className="w-full max-w-5xl h-[90vh] rounded-2xl bg-[#161920] border border-white/15 p-6 shadow-2xl flex flex-col space-y-4">
         {/* Modal Top Bar */}
         <div className="flex items-center justify-between pb-3 border-b border-white/10 shrink-0">
           <div className="flex items-center gap-3">
@@ -633,10 +637,10 @@ export const HacktoberfestModal: React.FC<HacktoberfestModalProps> = ({
             </div>
             <div>
               <h3 className="text-base font-display font-bold text-white tracking-tight">
-                Open-Source Repository & Python Architecture Hub
+                1-Click Instant Launch & Open-Source Repository
               </h3>
               <span className="text-xs font-mono text-white/50 block">
-                Google Gemma 4 · Ollama · Python 3.11 · Streamlit · MIT License
+                Copy 1 command below to open the app immediately — no long setup codes required
               </span>
             </div>
           </div>
@@ -649,28 +653,52 @@ export const HacktoberfestModal: React.FC<HacktoberfestModalProps> = ({
           </button>
         </div>
 
-        {/* Quick Highlights Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 shrink-0 text-xs font-mono">
-          <div className="p-2.5 rounded-lg bg-black/40 border border-white/5 flex items-center gap-2">
-            <Cpu className="w-4 h-4 text-[#FF7518]" />
-            <div>
-              <span className="text-white/40 block text-[10px]">AI MODEL</span>
-              <span className="text-white font-bold">Gemma 4:31B Cloud</span>
+        {/* Instant 1-Copy Launch Bar */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 shrink-0 font-mono text-xs">
+          <div className="p-3 rounded-xl bg-black/60 border border-[#FF7518]/40 flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <span className="text-[10px] uppercase tracking-wider text-[#FF7518] font-bold block">
+                1-Click Copy: Clone & Auto-Open App (Windows 11)
+              </span>
+              <code className="text-white/90 text-[11px] truncate block mt-0.5 select-all">
+                {oneLineCloneCmd}
+              </code>
             </div>
+            <button
+              onClick={() => handleCopyQuickCommand('clone', oneLineCloneCmd)}
+              className={`px-3 py-2 rounded-lg font-bold shrink-0 flex items-center gap-1.5 transition-all cursor-pointer ${
+                copiedQuickCmd === 'clone'
+                  ? 'bg-[#42C98B] text-black'
+                  : isHalloween
+                  ? 'bg-[#FF7518] text-black hover:bg-[#FF8A3D]'
+                  : 'bg-blue-600 text-white hover:bg-blue-500'
+              }`}
+            >
+              {copiedQuickCmd === 'clone' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>{copiedQuickCmd === 'clone' ? 'Copied!' : 'Copy Code'}</span>
+            </button>
           </div>
-          <div className="p-2.5 rounded-lg bg-black/40 border border-white/5 flex items-center gap-2">
-            <Terminal className="w-4 h-4 text-[#42C98B]" />
-            <div>
-              <span className="text-white/40 block text-[10px]">LOCAL RUNTIME</span>
-              <span className="text-white font-bold">Ollama (127.0.0.1:11434)</span>
+
+          <div className="p-3 rounded-xl bg-black/60 border border-white/15 flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <span className="text-[10px] uppercase tracking-wider text-[#42C98B] font-bold block">
+                Already Downloaded Folder? Copy 1-Line Launch
+              </span>
+              <code className="text-white/90 text-[11px] truncate block mt-0.5 select-all">
+                {oneWordRunCmd}
+              </code>
             </div>
-          </div>
-          <div className="p-2.5 rounded-lg bg-black/40 border border-white/5 flex items-center gap-2">
-            <BookOpen className="w-4 h-4 text-[#9B5DE5]" />
-            <div>
-              <span className="text-white/40 block text-[10px]">LICENSE</span>
-              <span className="text-white font-bold">MIT Open-Source</span>
-            </div>
+            <button
+              onClick={() => handleCopyQuickCommand('run', oneWordRunCmd)}
+              className={`px-3 py-2 rounded-lg font-bold shrink-0 flex items-center gap-1.5 transition-all cursor-pointer ${
+                copiedQuickCmd === 'run'
+                  ? 'bg-[#42C98B] text-black'
+                  : 'bg-white/10 hover:bg-white/20 text-white'
+              }`}
+            >
+              {copiedQuickCmd === 'run' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>{copiedQuickCmd === 'run' ? 'Copied!' : 'Copy Code'}</span>
+            </button>
           </div>
         </div>
 
@@ -739,14 +767,14 @@ export const HacktoberfestModal: React.FC<HacktoberfestModalProps> = ({
         {/* Windows 11 / Setup Tip Banner */}
         <div className="shrink-0 p-3 rounded-lg bg-black/40 border border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs font-mono text-white/70">
           <div className="flex items-center gap-2">
-            <Terminal className="w-3.5 h-3.5 text-[#FF7518]" />
-            <span>Windows 11 Setup: Run <code>ollama run gemma4:31b-cloud</code> & launch with <code>npm run dev</code> or <code>streamlit run app.py</code></span>
+            <Play className="w-3.5 h-3.5 text-[#42C98B]" />
+            <span>Zero-Config Tip: Just double-click <code>start-marketmind.bat</code> on Windows 11 to open the app automatically!</span>
           </div>
           <button
-            onClick={() => setActiveFileKey('README.md')}
+            onClick={() => setActiveFileKey('start-marketmind.bat')}
             className="text-xs text-[#FF7518] hover:underline"
           >
-            Read 2-Min Demo Script →
+            View 1-Click Launcher →
           </button>
         </div>
       </div>

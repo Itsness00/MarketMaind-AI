@@ -230,16 +230,43 @@ All analysis is strictly grounded in the loaded dataset. Select one of the resea
 
         {/* Clear Cloud Sandbox Notice when Disconnected */}
         {!ollamaConfig.isConnected && (
-          <div className="p-3 rounded-lg bg-black/40 border border-amber-500/30 text-[11px] font-mono text-amber-200/90 leading-relaxed flex items-start gap-2.5">
+          <div className="p-3.5 rounded-lg bg-black/40 border border-amber-500/30 text-[11px] font-mono text-amber-200/90 leading-relaxed flex items-start gap-2.5">
             <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-            <div className="space-y-1">
+            <div className="space-y-2 flex-1 min-w-0">
               <div>
                 <strong>Google AI Studio Cloud Sandbox Notice</strong>: The cloud container cannot access your private Windows 11 laptop at <code className="text-white bg-black/60 px-1 py-0.5 rounded">http://127.0.0.1:11434</code>.
               </div>
               <div className="text-white/70">
-                Non-AI features (charts, indicator suite, underwater drawdown, risk scenarios, CSV uploads) remain 100% active. When exported and run locally on Windows 11, the Node.js backend connects directly to your authenticated Ollama session.
+                To launch locally without typing long commands, double-click <code className="text-[#FF7518]">start-marketmind.bat</code> after downloading, or copy this 1-line command:
               </div>
-              <div className="pt-1 flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg bg-black/70 border border-white/10">
+                <code className="text-white text-[11px] flex-1 truncate select-all">
+                  git clone https://github.com/marketmind-ai/marketmind-ai.git && cd marketmind-ai && start-marketmind.bat
+                </code>
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleCopyMessage(
+                      'quick_launch_cmd',
+                      'git clone https://github.com/marketmind-ai/marketmind-ai.git && cd marketmind-ai && start-marketmind.bat'
+                    )
+                  }
+                  className="px-2.5 py-1 rounded bg-[#FF7518] text-black font-bold hover:bg-[#FF8A3D] transition-colors flex items-center gap-1 shrink-0 cursor-pointer"
+                >
+                  {copiedId === 'quick_launch_cmd' ? (
+                    <>
+                      <Check className="w-3 h-3" />
+                      <span>Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3 h-3" />
+                      <span>Copy 1-Line Launch</span>
+                    </>
+                  )}
+                </button>
+              </div>
+              <div className="pt-0.5 flex items-center gap-3">
                 <label className="inline-flex items-center gap-2 cursor-pointer text-xs font-semibold text-white">
                   <input
                     type="checkbox"

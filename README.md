@@ -2,7 +2,31 @@
 ### Hacktoberfest 2026 Open-Source AI Project
 **Tagline:** *"Read the Signal. Question the Noise."*
 
-MarketMind AI is an open-source financial intelligence platform designed to help independent researchers, analysts, and students explore financial market data, evaluate risk metrics, and generate institutional research reports through **Google's Gemma 4:31B Cloud** model via **Ollama**.
+MarketMind AI is an open-source financial intelligence platform powered by **Google's Gemma 4:31B Cloud** model via **Ollama**.
+
+---
+
+## ⚡ 1-Click / 1-Line Instant Launch (Zero Long Commands!)
+
+You do **not** need to type multiple setup commands. Just copy and paste **one single line** below, or double-click the launcher after downloading!
+
+### Option A: One-Line Copy & Paste (Windows 11 PowerShell / CMD)
+Copy and paste this single command to clone, install, and launch the app immediately:
+```powershell
+git clone https://github.com/marketmind-ai/marketmind-ai.git && cd marketmind-ai && start-marketmind.bat
+```
+
+### Option B: Already Downloaded / Exported ZIP?
+1. Open the folder on your computer.
+2. **Double-click `start-marketmind.bat`** (Windows) or run `./start-marketmind.sh` (Mac/Linux).
+3. It automatically configures `.env`, installs packages, checks your local Ollama (`gemma4:31b-cloud`), and opens `http://localhost:3000` in your browser!
+
+### Option C: Run Directly in Any Terminal (1 Short Command)
+If you already have the folder open in VS Code or Terminal, just copy:
+```bash
+npm run launch
+```
+*(Then click `http://localhost:3000`)*
 
 ---
 
@@ -33,58 +57,15 @@ To prevent financial hallucination, all numerical indicators are calculated dete
 
 ---
 
-## 💻 Local Execution Guide (Windows 11 Laptop)
-
-The application functions locally after being exported from Google AI Studio.
-
-### 1. Prerequisites
+## 💻 Prerequisites on Windows 11
 - **Node.js 20+** installed
-- **Ollama for Windows** installed from [ollama.com](https://ollama.com) and authenticated
-
-### 2. Launch Gemma 4:31B Cloud on Windows 11
-Open Windows Terminal or PowerShell:
-```powershell
-ollama run gemma4:31b-cloud
-```
-*Note: Your authenticated Ollama session provides access to Gemma 4:31B Cloud through Ollama's cloud infrastructure at `http://127.0.0.1:11434`.*
-
-### 3. Clone / Export & Configure Environment
-```bash
-git clone https://github.com/marketmind-ai/marketmind-ai.git
-cd marketmind-ai
-
-# Create local environment configuration
-cp .env.example .env
-```
-Ensure your `.env` contains:
-```env
-OLLAMA_BASE_URL=http://127.0.0.1:11434
-OLLAMA_MODEL=gemma4:31b-cloud
-PORT=3000
-```
-
-### 4. Install Dependencies & Run
-```bash
-npm install
-npm run dev
-```
-Open your browser to `http://localhost:3000`. The AI Analyst will show `CONNECTION STATUS: CONNECTED`.
+- **Ollama for Windows** installed from [ollama.com](https://ollama.com) with `gemma4:31b-cloud` authenticated (`ollama run gemma4:31b-cloud`)
 
 ---
 
 ## 🧪 Testing Instructions
-
-Run the unit test suite verifying deterministic financial mathematical calculations:
 ```bash
-npx tsx --test tests/analytics.test.ts
-```
-
-If using the Python Streamlit mirror in `marketmind-ai/`:
-```bash
-cd marketmind-ai
-pip install -r requirements.txt
-pytest tests/
-streamlit run app.py
+npm test
 ```
 
 ---
@@ -101,18 +82,6 @@ MarketMind AI generates structured reports containing:
 7. Bullish Scenario
 8. Bearish Scenario
 9. Conclusion
-
-Reports can be downloaded as Markdown (`.md`) or plain text (`.txt`).
-
----
-
-## 🛡️ Security & Integrity
-
-- Credentials are never exposed to the client-side frontend.
-- Arbitrary shell commands are strictly prohibited.
-- Automatic trade execution is not supported (educational & research scope only).
-- All uploaded CSVs undergo schema validation (`date`, `ticker`, `close`).
-- Demonstration data is deterministically synthetic and visibly labeled: `"SIMULATED DATA — NOT LIVE MARKET PRICES"`.
 
 ---
 
