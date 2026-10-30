@@ -1,11 +1,121 @@
-<div align="center">
+# MarketMind AI — Midnight Market Edition
+### Hacktoberfest 2026 Open-Source AI Project
+**Tagline:** *"Read the Signal. Question the Noise."*
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+MarketMind AI is an open-source financial intelligence platform designed to help independent researchers, analysts, and students explore financial market data, evaluate risk metrics, and generate institutional research reports through **Google's Gemma 4:31B Cloud** model via **Ollama**.
 
-  <h1>Built with AI Studio</h2>
+---
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+## 🎃 Primary Objectives & Architecture
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+### 1. Gemma 4:31B Cloud Integration via Ollama
+- **AI Provider:** Ollama
+- **AI Model:** `gemma4:31b-cloud` (Google Gemma 4:31B Cloud running through Ollama's authenticated cloud infrastructure)
+- **Local Ollama Daemon:** `http://127.0.0.1:11434`
+- **Chat Endpoint:** `POST /api/chat`
+- **Full-Stack Execution:** React 19 + Tailwind CSS frontend with a Node.js Express backend proxying server-side requests to Ollama.
+- **Zero Gemini API Dependency:** No external paid API keys or Gemini dependencies required for financial analysis after local deployment.
 
-</div>
+### 2. Node.js Backend API Endpoints
+- `GET /api/health` — Verifies whether the Node.js backend can reach the local Ollama daemon and checks availability of `gemma4:31b-cloud`.
+- `POST /api/analyze` — Receives validated financial statistics and user questions, formats the research context, and queries Gemma 4:31B Cloud.
+- `POST /api/report` — Compiles standardized 9-section institutional financial research reports using active metrics.
+- `POST /api/chat` — Direct chat endpoint interfacing with Ollama's native chat schema.
+
+### 3. Absolute Mathematical Grounding
+To prevent financial hallucination, all numerical indicators are calculated deterministically in application code before submission to Gemma:
+- Daily percentage returns & cumulative total returns
+- Annualized historical volatility ($\sigma \times \sqrt{252}$)
+- Peak-to-trough Maximum Drawdown (MDD) with exact dates
+- 1-Day 95% Historical Value-at-Risk (VaR)
+- Sharpe Ratio proxy (4.5% risk-free rate) & Calmar Ratio
+- Simple Moving Averages: SMA 20, SMA 50, SMA 200
+
+---
+
+## 💻 Local Execution Guide (Windows 11 Laptop)
+
+The application functions locally after being exported from Google AI Studio.
+
+### 1. Prerequisites
+- **Node.js 20+** installed
+- **Ollama for Windows** installed from [ollama.com](https://ollama.com) and authenticated
+
+### 2. Launch Gemma 4:31B Cloud on Windows 11
+Open Windows Terminal or PowerShell:
+```powershell
+ollama run gemma4:31b-cloud
+```
+*Note: Your authenticated Ollama session provides access to Gemma 4:31B Cloud through Ollama's cloud infrastructure at `http://127.0.0.1:11434`.*
+
+### 3. Clone / Export & Configure Environment
+```bash
+git clone https://github.com/marketmind-ai/marketmind-ai.git
+cd marketmind-ai
+
+# Create local environment configuration
+cp .env.example .env
+```
+Ensure your `.env` contains:
+```env
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+OLLAMA_MODEL=gemma4:31b-cloud
+PORT=3000
+```
+
+### 4. Install Dependencies & Run
+```bash
+npm install
+npm run dev
+```
+Open your browser to `http://localhost:3000`. The AI Analyst will show `CONNECTION STATUS: CONNECTED`.
+
+---
+
+## 🧪 Testing Instructions
+
+Run the unit test suite verifying deterministic financial mathematical calculations:
+```bash
+npx tsx --test tests/analytics.test.ts
+```
+
+If using the Python Streamlit mirror in `marketmind-ai/`:
+```bash
+cd marketmind-ai
+pip install -r requirements.txt
+pytest tests/
+streamlit run app.py
+```
+
+---
+
+## 📋 9-Section Financial Research Reports
+
+MarketMind AI generates structured reports containing:
+1. Executive Summary
+2. Financial Market Overview
+3. Dataset Analysis
+4. Performance Indicators
+5. Historical Volatility
+6. Market Risks
+7. Bullish Scenario
+8. Bearish Scenario
+9. Conclusion
+
+Reports can be downloaded as Markdown (`.md`) or plain text (`.txt`).
+
+---
+
+## 🛡️ Security & Integrity
+
+- Credentials are never exposed to the client-side frontend.
+- Arbitrary shell commands are strictly prohibited.
+- Automatic trade execution is not supported (educational & research scope only).
+- All uploaded CSVs undergo schema validation (`date`, `ticker`, `close`).
+- Demonstration data is deterministically synthetic and visibly labeled: `"SIMULATED DATA — NOT LIVE MARKET PRICES"`.
+
+---
+
+## 📄 License
+
+Original application code is published under the **MIT License**. Google Gemma model weights are subject to the separate Google Gemma Terms of Use.

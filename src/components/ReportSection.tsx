@@ -1,0 +1,286 @@
+/**
+ * @license
+ * SPDX-License-Identifier: MIT
+ * MarketMind AI — Section E: AI Financial Report Generator
+ * Generates structured 9-section institutional research report via Gemma 4:31B Cloud & Ollama backend.
+ */
+
+import React, { useState, useEffect } from 'react';
+import { AssetMetrics } from '../types/market';
+import { requestFinancialReport, generateStructuredFinancialReport } from '../utils/aiEngine';
+import confetti from 'canvas-confetti';
+import {
+  FileText,
+  Download,
+  Copy,
+  Check,
+  RefreshCw,
+  Printer,
+  Eye,
+  Code2,
+  Cpu,
+  Bot,
+} from 'lucide-react';
+
+interface ReportSectionProps {
+  activeMetric: AssetMetrics;
+  peerMetrics: AssetMetrics[];
+  currentProvenance: string;
+  isHalloween: boolean;
+}
+
+export const ReportSection: React.FC<ReportSectionProps> = ({
+  activeMetric,
+  peerMetrics,
+  currentProvenance,
+  isHalloween,
+}) => {
+  const [copied, setCopied] = useState(false);
+  const [viewMode, setViewMode] = useState<'preview' | 'raw'>('preview');
+  const [reportContent, setReportContent] = useState<string>('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [reportSource, setReportSource] = useState<'ollama-gemma4-cloud' | 'simulated-preview'>('simulated-preview');
+
+  // Initial report generation on load or metric change
+  useEffect(() => {
+    let isMounted = true;
+    setIsGenerating(true);
+    requestFinancialReport(activeMetric, peerMetrics, currentProvenance, true).then((res) => {
+      if (isMounted) {
+        setReportContent(res.report);
+        setReportSource(res.source);
+        setIsGenerating(false);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [activeMetric.ticker, currentProvenance]);
+
+  const handleRegenerate = async () => {
+    setIsGenerating(true);
+    const res = await requestFinancialReport(activeMetric, peerMetrics, currentProvenance, true);
+    setReportContent(res.report);
+    setReportSource(res.source);
+    setIsGenerating(false);
+
+    confetti({
+      particleCount: 35,
+      spread: 60,
+      origin: { y: 0.8 },
+      colors: isHalloween ? ['#FF7518', '#9B5DE5', '#F4F1EA'] : ['#3B82F6', '#10B981', '#FFFFFF'],
+    });
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(reportContent);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDownload = (format: 'md' | 'txt') => {
+    const blob = new Blob([reportContent], {
+      type: format === 'md' ? 'text/markdown;charset=utf-8;' : 'text/plain;charset=utf-8;',
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute(
+      'download',
+      `MarketMind_Report_${activeMetric.ticker}_${activeMetric.endDate}.${format}`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  return (
+    <section className="space-y-6">
+      {/* Header & Export Actions */}
+      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-white/10">
+        <div>
+          <div className="flex items-center gap-2">
+            <FileText
+              className={`w-5 h-5 ${
+                isHalloween ? 'text-[#FF7518]' : 'text-blue-400'
+              }`}
+            />
+            <h3 className="text-xl font-display font-bold text-white tracking-tight">
+              AI Financial Research Report
+            </h3>
+          </div>
+          <p className="text-xs font-mono text-white/50 mt-1">
+            Standardized 9-Section Institutional Memorandum · Powered by Gemma 4:31B Cloud & Node.js Backend
+          </p>
+        </div>
+
+        {/* Action Controls */}
+        <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
+          <div className="flex items-center p-1 bg-black/40 rounded-lg border border-white/10 mr-2">
+            <button
+              onClick={() => setViewMode('preview')}
+              className={`px-2.5 py-1 rounded flex items-center gap-1 transition-colors ${
+                viewMode === 'preview'
+                  ? isHalloween
+                    ? 'bg-[#FF7518] text-black font-bold'
+                    : 'bg-blue-600 text-white font-bold'
+                  : 'text-white/60 hover:text-white'
+              }`}
+            >
+              <Eye className="w-3 h-3" />
+              <span>Preview</span>
+            </button>
+            <button
+              onClick={() => setViewMode('raw')}
+              className={`px-2.5 py-1 rounded flex items-center gap-1 transition-colors ${
+                viewMode === 'raw'
+                  ? isHalloween
+                    ? 'bg-[#FF7518] text-black font-bold'
+                    : 'bg-blue-600 text-white font-bold'
+                  : 'text-white/60 hover:text-white'
+              }`}
+            >
+              <Code2 className="w-3 h-3" />
+              <span>Markdown</span>
+            </button>
+          </div>
+
+          <button
+            onClick={handleRegenerate}
+            disabled={isGenerating}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isGenerating ? 'animate-spin' : ''}`} />
+            <span>{isGenerating ? 'Generating...' : 'Regenerate'}</span>
+          </button>
+
+          <button
+            onClick={handleCopy}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white transition-colors"
+          >
+            {copied ? <Check className="w-3.5 h-3.5 text-[#42C98B]" /> : <Copy className="w-3.5 h-3.5" />}
+            <span>{copied ? 'Copied' : 'Copy'}</span>
+          </button>
+
+          <button
+            onClick={() => handleDownload('md')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all ${
+              isHalloween
+                ? 'bg-[#FF7518] text-black hover:bg-[#FF8A3D]'
+                : 'bg-blue-600 text-white hover:bg-blue-500'
+            }`}
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Download .MD</span>
+          </button>
+
+          <button
+            onClick={() => handleDownload('txt')}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 border border-white/15 text-white transition-colors"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>.TXT</span>
+          </button>
+
+          <button
+            onClick={handlePrint}
+            title="Print or Save PDF"
+            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition-colors"
+          >
+            <Printer className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Model & Provenance Tag Banner */}
+      <div className="flex flex-wrap items-center justify-between gap-4 p-3 rounded-lg bg-black/40 border border-white/5 text-xs font-mono text-white/60">
+        <div className="flex items-center gap-2">
+          <Cpu className="w-3.5 h-3.5 text-[#FF7518]" />
+          <span>MODEL: <strong>GEMMA 4:31B CLOUD</strong> (VIA OLLAMA BACKEND)</span>
+          <span>·</span>
+          <span>SOURCE: <span className="uppercase text-white font-medium">{reportSource === 'ollama-gemma4-cloud' ? 'Live Ollama' : 'Preview Kernel'}</span></span>
+        </div>
+        <div>
+          <span>PROVENANCE: {currentProvenance}</span>
+        </div>
+      </div>
+
+      {/* Report Canvas */}
+      {viewMode === 'raw' ? (
+        <div className="p-6 rounded-xl bg-black/60 border border-white/10">
+          <textarea
+            value={reportContent}
+            onChange={(e) => setReportContent(e.target.value)}
+            rows={26}
+            className="w-full bg-transparent font-mono text-xs text-white/90 focus:outline-none leading-relaxed resize-y"
+          />
+        </div>
+      ) : (
+        <div className="p-8 sm:p-12 rounded-2xl bg-[#161920]/95 border border-white/10 shadow-2xl backdrop-blur-md max-w-4xl mx-auto space-y-8 print:bg-white print:text-black">
+          {/* Header block */}
+          <div className="border-b border-white/10 pb-6 space-y-2">
+            <div className="flex items-center justify-between text-xs font-mono text-white/50">
+              <span>MARKETMIND AI // FINANCIAL INTELLIGENCE MEMORANDUM</span>
+              <span>GEMMA 4:31B CLOUD EDITION</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-display font-extrabold text-white tracking-tight">
+              RESEARCH REPORT: {activeMetric.ticker} ({activeMetric.name})
+            </h1>
+            <div className="flex flex-wrap gap-4 text-xs font-mono text-white/60 pt-2">
+              <span>Sample Horizon: {activeMetric.startDate} to {activeMetric.endDate}</span>
+              <span>·</span>
+              <span>{activeMetric.dataPointsCount} Daily Observations</span>
+              <span>·</span>
+              <span>Provenance: {currentProvenance}</span>
+            </div>
+          </div>
+
+          {/* 9 Standardized Sections */}
+          <div className="space-y-6 text-sm text-white/80 leading-relaxed font-sans">
+            {reportContent
+              .split('\n## ')
+              .slice(1)
+              .map((chunk, idx) => {
+                const lines = chunk.split('\n');
+                const title = lines[0];
+                const body = lines.slice(1).join('\n');
+
+                return (
+                  <div key={idx} className="space-y-2 pt-2 border-t border-white/5 first:border-none first:pt-0">
+                    <h2 className="text-base font-display font-bold text-white tracking-tight flex items-center gap-2">
+                      <span className={`w-1.5 h-1.5 rounded-full ${isHalloween ? 'bg-[#FF7518]' : 'bg-blue-500'}`} />
+                      {title}
+                    </h2>
+                    <div className="text-xs sm:text-sm text-white/70 leading-relaxed space-y-2 font-sans">
+                      {body.split('\n\n').map((para, pIdx) => {
+                        if (para.startsWith('- ')) {
+                          return (
+                            <ul key={pIdx} className="list-disc pl-5 space-y-1 font-mono text-xs text-white/80">
+                              {para.split('\n').map((li, lIdx) => (
+                                <li key={lIdx}>{li.replace(/^- /, '')}</li>
+                              ))}
+                            </ul>
+                          );
+                        }
+                        return <p key={pIdx}>{para}</p>;
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+
+          {/* Footer watermark */}
+          <div className="pt-8 border-t border-white/10 text-xs font-mono text-white/40 flex flex-wrap justify-between items-center">
+            <span>MarketMind AI — MIT Licensed Open-Source Financial Intelligence</span>
+            <span>Gemma 4:31B Cloud · Ollama · Hacktoberfest 2026</span>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+};
