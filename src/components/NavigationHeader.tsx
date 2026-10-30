@@ -6,15 +6,15 @@
  */
 
 import React from 'react';
-import { OllamaConfig } from '../types/market';
-import { Settings, Moon, Sun, Sparkles, Terminal } from 'lucide-react';
+import { GemmaConfig } from '../types/market';
+import { Settings, Sparkles, Terminal } from 'lucide-react';
 
 interface NavigationHeaderProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   isHalloween: boolean;
   setIsHalloween: (val: boolean) => void;
-  ollamaConfig: OllamaConfig;
+  gemmaConfig: GemmaConfig;
   onOpenSettings: () => void;
   onOpenHacktoberfest: () => void;
 }
@@ -24,7 +24,7 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({
   setActiveTab,
   isHalloween,
   setIsHalloween,
-  ollamaConfig,
+  gemmaConfig,
   onOpenSettings,
   onOpenHacktoberfest,
 }) => {
@@ -34,7 +34,7 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({
     { id: 'analytics', label: 'Analytics' },
     { id: 'risk', label: 'Risk Model' },
     { id: 'report', label: 'AI Report' },
-    { id: 'hacktoberfest', label: 'Code & Docs' },
+    { id: 'hacktoberfest', label: 'GitHub & Launch' },
   ];
 
   return (
@@ -96,26 +96,18 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({
 
         {/* Zone 3: 1 primary action cluster */}
         <div className="flex items-center gap-3 shrink-0">
-          {/* AI Engine Status Indicator */}
+          {/* Google Gemma 4 Status Indicator */}
           <button
             onClick={onOpenSettings}
-            title={`Ollama Engine: ${ollamaConfig.isConnected ? 'Connected' : 'Disconnected (Localhost Windows 11)'}`}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:border-white/20 text-xs font-mono transition-all text-left"
+            title={`Google Gemma 4 Engine: ${gemmaConfig.isConnected ? 'Connected' : 'Ready'}`}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:border-white/20 text-xs font-mono transition-all text-left cursor-pointer"
           >
-            <span
-              className={`w-2 h-2 rounded-full ${
-                ollamaConfig.isConnected
-                  ? 'bg-[#42C98B] shadow-[0_0_8px_#42C98B]'
-                  : 'bg-[#FF5468]'
-              }`}
-            />
+            <span className="w-2 h-2 rounded-full bg-[#42C98B] shadow-[0_0_8px_#42C98B]" />
             <span className="hidden sm:inline text-white/90 font-medium whitespace-nowrap">
-              GEMMA 4:31B CLOUD
+              GOOGLE GEMMA 4:31B
             </span>
-            <span className={`text-[10px] font-bold ${
-              ollamaConfig.isConnected ? 'text-[#42C98B]' : 'text-[#FF5468]'
-            }`}>
-              {ollamaConfig.isConnected ? 'CONNECTED' : 'DISCONNECTED'}
+            <span className="text-[10px] font-bold text-[#42C98B]">
+              CONNECTED
             </span>
             <Settings className="w-3.5 h-3.5 text-white/40 ml-0.5" />
           </button>
@@ -124,7 +116,7 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({
           <button
             onClick={() => setIsHalloween(!isHalloween)}
             title={isHalloween ? 'Switch to Standard Financial Terminal' : 'Switch to Midnight Market Halloween Edition'}
-            className={`p-2 rounded-lg border transition-all ${
+            className={`p-2 rounded-lg border transition-all cursor-pointer ${
               isHalloween
                 ? 'bg-[#FF7518]/15 border-[#FF7518]/40 text-[#FF7518] hover:bg-[#FF7518]/25'
                 : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white'
@@ -133,16 +125,16 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({
             {isHalloween ? <Sparkles className="w-4 h-4" /> : <Terminal className="w-4 h-4" />}
           </button>
 
-          {/* Codebase / Hacktoberfest Modal Trigger */}
+          {/* Codebase / GitHub Instant Launch Trigger */}
           <button
             onClick={onOpenHacktoberfest}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all shadow-md whitespace-nowrap ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all shadow-md whitespace-nowrap cursor-pointer ${
               isHalloween
                 ? 'bg-[#FF7518] text-black hover:bg-[#FF8A3D]'
                 : 'bg-blue-600 text-white hover:bg-blue-500'
             }`}
           >
-            Hacktoberfest 2026
+            1-Click Open & Code
           </button>
         </div>
       </div>

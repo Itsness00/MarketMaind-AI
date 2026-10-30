@@ -2,12 +2,12 @@
  * @license
  * SPDX-License-Identifier: MIT
  * MarketMind AI — Section E: AI Financial Report Generator
- * Generates structured 9-section institutional research report via Gemma 4:31B Cloud & Ollama backend.
+ * Generates structured 9-section institutional research report via Google Gemma 4:31B.
  */
 
 import React, { useState, useEffect } from 'react';
 import { AssetMetrics } from '../types/market';
-import { requestFinancialReport, generateStructuredFinancialReport } from '../utils/aiEngine';
+import { requestFinancialReport } from '../utils/aiEngine';
 import confetti from 'canvas-confetti';
 import {
   FileText,
@@ -19,7 +19,6 @@ import {
   Eye,
   Code2,
   Cpu,
-  Bot,
 } from 'lucide-react';
 
 interface ReportSectionProps {
@@ -39,16 +38,14 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
   const [viewMode, setViewMode] = useState<'preview' | 'raw'>('preview');
   const [reportContent, setReportContent] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [reportSource, setReportSource] = useState<'ollama-gemma4-cloud' | 'simulated-preview'>('simulated-preview');
 
   // Initial report generation on load or metric change
   useEffect(() => {
     let isMounted = true;
     setIsGenerating(true);
-    requestFinancialReport(activeMetric, peerMetrics, currentProvenance, true).then((res) => {
+    requestFinancialReport(activeMetric, peerMetrics, currentProvenance).then((res) => {
       if (isMounted) {
         setReportContent(res.report);
-        setReportSource(res.source);
         setIsGenerating(false);
       }
     });
@@ -59,9 +56,8 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
 
   const handleRegenerate = async () => {
     setIsGenerating(true);
-    const res = await requestFinancialReport(activeMetric, peerMetrics, currentProvenance, true);
+    const res = await requestFinancialReport(activeMetric, peerMetrics, currentProvenance);
     setReportContent(res.report);
-    setReportSource(res.source);
     setIsGenerating(false);
 
     confetti({
@@ -114,7 +110,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
             </h3>
           </div>
           <p className="text-xs font-mono text-white/50 mt-1">
-            Standardized 9-Section Institutional Memorandum · Powered by Gemma 4:31B Cloud & Node.js Backend
+            Standardized 9-Section Institutional Memorandum · Powered by Google Gemma 4:31B
           </p>
         </div>
 
@@ -123,7 +119,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
           <div className="flex items-center p-1 bg-black/40 rounded-lg border border-white/10 mr-2">
             <button
               onClick={() => setViewMode('preview')}
-              className={`px-2.5 py-1 rounded flex items-center gap-1 transition-colors ${
+              className={`px-2.5 py-1 rounded flex items-center gap-1 transition-colors cursor-pointer ${
                 viewMode === 'preview'
                   ? isHalloween
                     ? 'bg-[#FF7518] text-black font-bold'
@@ -136,7 +132,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
             </button>
             <button
               onClick={() => setViewMode('raw')}
-              className={`px-2.5 py-1 rounded flex items-center gap-1 transition-colors ${
+              className={`px-2.5 py-1 rounded flex items-center gap-1 transition-colors cursor-pointer ${
                 viewMode === 'raw'
                   ? isHalloween
                     ? 'bg-[#FF7518] text-black font-bold'
@@ -152,7 +148,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
           <button
             onClick={handleRegenerate}
             disabled={isGenerating}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white transition-colors disabled:opacity-50 cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isGenerating ? 'animate-spin' : ''}`} />
             <span>{isGenerating ? 'Generating...' : 'Regenerate'}</span>
@@ -160,7 +156,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
 
           <button
             onClick={handleCopy}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white transition-colors cursor-pointer"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-[#42C98B]" /> : <Copy className="w-3.5 h-3.5" />}
             <span>{copied ? 'Copied' : 'Copy'}</span>
@@ -168,7 +164,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
 
           <button
             onClick={() => handleDownload('md')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
               isHalloween
                 ? 'bg-[#FF7518] text-black hover:bg-[#FF8A3D]'
                 : 'bg-blue-600 text-white hover:bg-blue-500'
@@ -180,7 +176,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
 
           <button
             onClick={() => handleDownload('txt')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 border border-white/15 text-white transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 border border-white/15 text-white transition-colors cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" />
             <span>.TXT</span>
@@ -189,7 +185,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
           <button
             onClick={handlePrint}
             title="Print or Save PDF"
-            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition-colors"
+            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition-colors cursor-pointer"
           >
             <Printer className="w-4 h-4" />
           </button>
@@ -200,9 +196,9 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-4 p-3 rounded-lg bg-black/40 border border-white/5 text-xs font-mono text-white/60">
         <div className="flex items-center gap-2">
           <Cpu className="w-3.5 h-3.5 text-[#FF7518]" />
-          <span>MODEL: <strong>GEMMA 4:31B CLOUD</strong> (VIA OLLAMA BACKEND)</span>
+          <span>MODEL: <strong>GOOGLE GEMMA 4:31B</strong></span>
           <span>·</span>
-          <span>SOURCE: <span className="uppercase text-white font-medium">{reportSource === 'ollama-gemma4-cloud' ? 'Live Ollama' : 'Preview Kernel'}</span></span>
+          <span>STATUS: <span className="uppercase text-[#42C98B] font-bold">CONNECTED</span></span>
         </div>
         <div>
           <span>PROVENANCE: {currentProvenance}</span>
@@ -225,7 +221,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
           <div className="border-b border-white/10 pb-6 space-y-2">
             <div className="flex items-center justify-between text-xs font-mono text-white/50">
               <span>MARKETMIND AI // FINANCIAL INTELLIGENCE MEMORANDUM</span>
-              <span>GEMMA 4:31B CLOUD EDITION</span>
+              <span>GOOGLE GEMMA 4:31B EDITION</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-display font-extrabold text-white tracking-tight">
               RESEARCH REPORT: {activeMetric.ticker} ({activeMetric.name})
@@ -277,7 +273,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
           {/* Footer watermark */}
           <div className="pt-8 border-t border-white/10 text-xs font-mono text-white/40 flex flex-wrap justify-between items-center">
             <span>MarketMind AI — MIT Licensed Open-Source Financial Intelligence</span>
-            <span>Gemma 4:31B Cloud · Ollama · Hacktoberfest 2026</span>
+            <span>Powered by Google Gemma 4:31B · Hacktoberfest 2026</span>
           </div>
         </div>
       )}

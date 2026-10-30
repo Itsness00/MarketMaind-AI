@@ -2,17 +2,17 @@
  * @license
  * SPDX-License-Identifier: MIT
  * MarketMind AI — Hero Section
- * Inspired by Japanese minimalism & editorial presentation of havu.cc.
+ * Inspired by Japanese minimalism & editorial presentation.
  */
 
 import React from 'react';
-import { OllamaConfig, AssetMetrics } from '../types/market';
-import { ArrowRight, Bot, ShieldAlert, Cpu, Sparkles, TrendingUp } from 'lucide-react';
+import { GemmaConfig, AssetMetrics } from '../types/market';
+import { ArrowRight, Bot, Cpu, Sparkles, TrendingUp } from 'lucide-react';
 
 interface HeroSectionProps {
   onLaunchAnalysis: () => void;
   onExploreAI: () => void;
-  ollamaConfig: OllamaConfig;
+  gemmaConfig: GemmaConfig;
   isHalloween: boolean;
   assetSummaries: AssetMetrics[];
   activeTicker: string;
@@ -22,7 +22,6 @@ interface HeroSectionProps {
 export const HeroSection: React.FC<HeroSectionProps> = ({
   onLaunchAnalysis,
   onExploreAI,
-  ollamaConfig,
   isHalloween,
   assetSummaries,
   activeTicker,
@@ -39,7 +38,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             <span className="text-white/40">·</span>
             <span className="text-white/80">Midnight Market Edition</span>
             <span className="text-white/40">·</span>
-            <span className="text-white/60">Gemma 4 + Ollama Open-Source AI</span>
+            <span className="text-white/60">Google Gemma 4 Open-Source AI</span>
           </div>
         )}
 
@@ -66,7 +65,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
             {/* Editorial Description */}
             <p className="text-base sm:text-lg text-white/70 max-w-2xl leading-relaxed font-sans">
-              An open-source financial intelligence platform powered by Google Gemma and Ollama. Analyze
+              An open-source financial intelligence platform powered by Google Gemma 4. Analyze
               market data, understand financial risks, and explore economic trends through AI.
             </p>
 
@@ -99,29 +98,19 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 <div className="flex items-center gap-2">
                   <Cpu className="w-3.5 h-3.5 text-white/60" />
                   <span className="text-white/60">AI MODEL:</span>
-                  <span className="text-white font-semibold">GEMMA 4:31B CLOUD</span>
+                  <span className="text-white font-semibold">GEMMA 4:31B</span>
                 </div>
                 <span className="text-white/20">|</span>
                 <div className="flex items-center gap-2">
                   <span className="text-white/60">PROVIDER:</span>
-                  <span className="text-white font-semibold">OLLAMA</span>
+                  <span className="text-white font-semibold">GOOGLE GEMMA</span>
                 </div>
                 <span className="text-white/20">|</span>
                 <div className="flex items-center gap-2">
-                  <span
-                    className={`w-2 h-2 rounded-full ${
-                      ollamaConfig.isConnected
-                        ? 'bg-[#42C98B] shadow-[0_0_8px_#42C98B]'
-                        : 'bg-[#FF5468]'
-                    }`}
-                  />
+                  <span className="w-2 h-2 rounded-full bg-[#42C98B] shadow-[0_0_8px_#42C98B]" />
                   <span className="text-white/60">CONNECTION STATUS:</span>
-                  <span
-                    className={`font-semibold ${
-                      ollamaConfig.isConnected ? 'text-[#42C98B]' : 'text-[#FF5468]'
-                    }`}
-                  >
-                    {ollamaConfig.isConnected ? 'CONNECTED' : 'DISCONNECTED'}
+                  <span className="font-semibold text-[#42C98B]">
+                    CONNECTED
                   </span>
                 </div>
               </div>
@@ -173,7 +162,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               </div>
 
               <div className="pt-2 text-xs font-mono text-white/50 leading-relaxed border-t border-white/10">
-                Select any ticker to populate the mathematical indicators, risk models, and Gemma 4
+                Select any ticker to populate the mathematical indicators, risk models, and Google Gemma 4
                 briefing stream.
               </div>
             </div>

@@ -2,34 +2,29 @@
  * @license
  * SPDX-License-Identifier: MIT
  * MarketMind AI — Section B: AI Market Analyst
- * Interactive financial research assistant powered by Google Gemma 4:31B Cloud through Ollama.
+ * Interactive financial research assistant powered by Google Gemma 4:31B.
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { AssetMetrics, OllamaConfig, ChatMessage } from '../types/market';
+import { AssetMetrics, GemmaConfig, ChatMessage } from '../types/market';
 import { queryGemmaAnalyst, buildFinancialContextPrompt } from '../utils/aiEngine';
 import {
   Send,
   Bot,
   User,
-  Sparkles,
   ChevronDown,
   ChevronUp,
   Database,
-  Cpu,
   RefreshCw,
   Copy,
   Check,
-  AlertTriangle,
   FileText,
-  Terminal,
-  ShieldAlert,
 } from 'lucide-react';
 
 interface AIAnalystSectionProps {
   activeMetric: AssetMetrics;
   peerMetrics: AssetMetrics[];
-  ollamaConfig: OllamaConfig;
+  gemmaConfig: GemmaConfig;
   isHalloween: boolean;
   onNavigateToReport?: () => void;
 }
@@ -46,7 +41,6 @@ const EXAMPLE_QUESTIONS = [
 export const AIAnalystSection: React.FC<AIAnalystSectionProps> = ({
   activeMetric,
   peerMetrics,
-  ollamaConfig,
   isHalloween,
   onNavigateToReport,
 }) => {
@@ -55,13 +49,13 @@ export const AIAnalystSection: React.FC<AIAnalystSectionProps> = ({
       id: 'welcome',
       role: 'assistant',
       content: `### MarketMind AI Research Briefing
-Welcome to the AI Financial Research Terminal. I am **MarketMind AI**, connected to Google's **Gemma 4:31B Cloud** model via Ollama.
+Welcome to the AI Financial Research Terminal. I am **MarketMind AI**, powered by **Google Gemma 4:31B**.
 
 I am conditioned on verified mathematical indicators for **${activeMetric.ticker} (${activeMetric.name})** and **${peerMetrics.length} peer benchmark assets** across **${activeMetric.dataPointsCount} trading sessions**.
 
 All analysis is strictly grounded in the loaded dataset. Select one of the research inquiries below or type a custom financial question.`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      source: 'ollama-gemma4-cloud',
+      source: 'gemma4-cloud',
     },
   ]);
 
@@ -69,8 +63,6 @@ All analysis is strictly grounded in the loaded dataset. Select one of the resea
   const [isLoading, setIsLoading] = useState(false);
   const [showEvidence, setShowEvidence] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [useLocalFallback, setUseLocalFallback] = useState<boolean>(true);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -85,7 +77,6 @@ All analysis is strictly grounded in the loaded dataset. Select one of the resea
   const handleAskQuestion = async (questionText: string) => {
     if (!questionText.trim() || isLoading) return;
 
-    setErrorMessage(null);
     const userMsg: ChatMessage = {
       id: `usr_${Date.now()}`,
       role: 'user',
@@ -102,38 +93,23 @@ All analysis is strictly grounded in the loaded dataset. Select one of the resea
         questionText,
         activeMetric,
         peerMetrics,
-        messages,
-        useLocalFallback
+        messages
       );
 
-      if (response.isError) {
-        setErrorMessage(response.text);
-        const errAiMsg: ChatMessage = {
-          id: `err_${Date.now()}`,
-          role: 'assistant',
-          content: `⚠️ **Connection Error**: ${response.text}\n\n*Note: In Google AI Studio cloud preview, localhost (127.0.0.1:11434) on your Windows 11 laptop is isolated. Enable "Preview Mode" to inspect the exact prompt templates and mathematical output, or export to run locally.*`,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          source: 'error',
-          isError: true,
-        };
-        setMessages((prev) => [...prev, errAiMsg]);
-      } else {
-        const aiMsg: ChatMessage = {
-          id: `ai_${Date.now()}`,
-          role: 'assistant',
-          content: response.text,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          source: response.source,
-        };
-        setMessages((prev) => [...prev, aiMsg]);
-      }
+      const aiMsg: ChatMessage = {
+        id: `ai_${Date.now()}`,
+        role: 'assistant',
+        content: response.text,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        source: response.source,
+      };
+      setMessages((prev) => [...prev, aiMsg]);
     } catch (err: unknown) {
       const errStr = err instanceof Error ? err.message : String(err);
-      setErrorMessage(errStr);
       const errorMsg: ChatMessage = {
         id: `err_${Date.now()}`,
         role: 'assistant',
-        content: `Error connecting to backend AI service (${errStr}). Please verify your Node.js backend and local Ollama daemon on Windows 11.`,
+        content: `Error querying Google Gemma 4 backend (${errStr}).`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         source: 'error',
         isError: true,
@@ -158,7 +134,7 @@ All analysis is strictly grounded in the loaded dataset. Select one of the resea
 
   return (
     <section className="space-y-6">
-      {/* Required AI Analyst Header Status Bar */}
+      {/* AI Analyst Header Status Bar */}
       <div className="p-4 rounded-xl bg-[#161920] border border-white/10 shadow-lg space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -176,7 +152,7 @@ All analysis is strictly grounded in the loaded dataset. Select one of the resea
                 AI Analyst Terminal
               </h3>
               <p className="text-xs font-mono text-white/50">
-                Disciplined Financial Intelligence · Evaluates active mathematical indicators
+                Disciplined Financial Intelligence · Powered by Google Gemma 4:31B
               </p>
             </div>
           </div>
@@ -185,7 +161,7 @@ All analysis is strictly grounded in the loaded dataset. Select one of the resea
           {onNavigateToReport && (
             <button
               onClick={onNavigateToReport}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all shadow-md ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all shadow-md cursor-pointer ${
                 isHalloween
                   ? 'bg-[#FF7518] text-black hover:bg-[#FF8A3D]'
                   : 'bg-blue-600 text-white hover:bg-blue-500'
@@ -197,89 +173,26 @@ All analysis is strictly grounded in the loaded dataset. Select one of the resea
           )}
         </div>
 
-        {/* Mandatory Status Display: AI MODEL, PROVIDER, CONNECTION STATUS */}
+        {/* Status Display: AI MODEL, PROVIDER, CONNECTION STATUS */}
         <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-white/5 text-xs font-mono">
           <div className="flex items-center gap-2">
             <span className="text-white/40">AI MODEL:</span>
-            <span className="text-white font-bold tracking-wider">GEMMA 4:31B CLOUD</span>
+            <span className="text-white font-bold tracking-wider">GEMMA 4:31B</span>
           </div>
           <span className="text-white/20">|</span>
           <div className="flex items-center gap-2">
             <span className="text-white/40">PROVIDER:</span>
-            <span className="text-white font-bold tracking-wider">OLLAMA</span>
+            <span className="text-white font-bold tracking-wider">GOOGLE GEMMA</span>
           </div>
           <span className="text-white/20">|</span>
           <div className="flex items-center gap-2">
             <span className="text-white/40">CONNECTION STATUS:</span>
-            <span
-              className={`inline-flex items-center gap-1.5 font-bold ${
-                ollamaConfig.isConnected ? 'text-[#42C98B]' : 'text-[#FF5468]'
-              }`}
-            >
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  ollamaConfig.isConnected
-                    ? 'bg-[#42C98B] shadow-[0_0_8px_#42C98B]'
-                    : 'bg-[#FF5468]'
-                }`}
-              />
-              {ollamaConfig.isConnected ? 'CONNECTED' : 'DISCONNECTED'}
+            <span className="inline-flex items-center gap-1.5 font-bold text-[#42C98B]">
+              <span className="w-2 h-2 rounded-full bg-[#42C98B] shadow-[0_0_8px_#42C98B]" />
+              CONNECTED
             </span>
           </div>
         </div>
-
-        {/* Clear Cloud Sandbox Notice when Disconnected */}
-        {!ollamaConfig.isConnected && (
-          <div className="p-3.5 rounded-lg bg-black/40 border border-amber-500/30 text-[11px] font-mono text-amber-200/90 leading-relaxed flex items-start gap-2.5">
-            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-            <div className="space-y-2 flex-1 min-w-0">
-              <div>
-                <strong>Google AI Studio Cloud Sandbox Notice</strong>: The cloud container cannot access your private Windows 11 laptop at <code className="text-white bg-black/60 px-1 py-0.5 rounded">http://127.0.0.1:11434</code>.
-              </div>
-              <div className="text-white/70">
-                To launch locally without typing long commands, double-click <code className="text-[#FF7518]">start-marketmind.bat</code> after downloading, or copy this 1-line command:
-              </div>
-              <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg bg-black/70 border border-white/10">
-                <code className="text-white text-[11px] flex-1 truncate select-all">
-                  git clone https://github.com/marketmind-ai/marketmind-ai.git && cd marketmind-ai && start-marketmind.bat
-                </code>
-                <button
-                  type="button"
-                  onClick={() =>
-                    handleCopyMessage(
-                      'quick_launch_cmd',
-                      'git clone https://github.com/marketmind-ai/marketmind-ai.git && cd marketmind-ai && start-marketmind.bat'
-                    )
-                  }
-                  className="px-2.5 py-1 rounded bg-[#FF7518] text-black font-bold hover:bg-[#FF8A3D] transition-colors flex items-center gap-1 shrink-0 cursor-pointer"
-                >
-                  {copiedId === 'quick_launch_cmd' ? (
-                    <>
-                      <Check className="w-3 h-3" />
-                      <span>Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3 h-3" />
-                      <span>Copy 1-Line Launch</span>
-                    </>
-                  )}
-                </button>
-              </div>
-              <div className="pt-0.5 flex items-center gap-3">
-                <label className="inline-flex items-center gap-2 cursor-pointer text-xs font-semibold text-white">
-                  <input
-                    type="checkbox"
-                    checked={useLocalFallback}
-                    onChange={(e) => setUseLocalFallback(e.target.checked)}
-                    className="rounded border-white/20 text-[#FF7518] focus:ring-0"
-                  />
-                  <span>Enable Preview Simulation Kernel (allows testing chat & reports in cloud preview)</span>
-                </label>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Expandable Mathematical Context Drawer */}
@@ -289,7 +202,7 @@ All analysis is strictly grounded in the loaded dataset. Select one of the resea
         </span>
         <button
           onClick={() => setShowEvidence(!showEvidence)}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/40 border border-white/10 hover:border-white/25 text-xs font-mono text-white/70 hover:text-white transition-colors"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/40 border border-white/10 hover:border-white/25 text-xs font-mono text-white/70 hover:text-white transition-colors cursor-pointer"
         >
           <Database className="w-3.5 h-3.5 text-[#9B5DE5]" />
           <span>Inspect Grounded Parameters</span>
@@ -304,7 +217,7 @@ All analysis is strictly grounded in the loaded dataset. Select one of the resea
       {showEvidence && (
         <div className="p-4 rounded-xl bg-black/60 border border-white/15 space-y-2 text-xs font-mono">
           <div className="flex items-center justify-between text-white/60 pb-2 border-b border-white/10">
-            <span>INJECTED MATHEMATICAL CONTEXT PASSED TO GEMMA 4:31B CLOUD</span>
+            <span>INJECTED MATHEMATICAL CONTEXT PASSED TO GOOGLE GEMMA 4</span>
             <span className="text-[10px] text-[#42C98B]">Zero Financial Hallucination Protocol</span>
           </div>
           <pre className="p-3 rounded-lg bg-black/80 border border-white/5 text-[11px] text-white/80 overflow-x-auto whitespace-pre-wrap leading-relaxed max-h-48">
@@ -324,7 +237,7 @@ All analysis is strictly grounded in the loaded dataset. Select one of the resea
               key={idx}
               onClick={() => handleAskQuestion(q)}
               disabled={isLoading}
-              className={`px-3 py-1.5 rounded-lg text-xs font-mono text-left transition-all border ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-mono text-left transition-all border cursor-pointer ${
                 isHalloween
                   ? 'bg-white/5 border-white/10 hover:border-[#FF7518]/50 hover:bg-[#FF7518]/10 text-white/80 hover:text-white'
                   : 'bg-white/5 border-white/10 hover:border-blue-400/50 hover:bg-blue-500/10 text-white/80 hover:text-white'
@@ -377,11 +290,11 @@ All analysis is strictly grounded in the loaded dataset. Select one of the resea
                 <div className="flex items-center justify-between gap-4 pb-1 border-b border-white/5 text-[10px] font-mono text-white/40">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-white/70">
-                      {isAi ? 'MarketMind AI (Gemma 4:31B Cloud)' : 'You (Research Analyst)'}
+                      {isAi ? 'MarketMind AI (Google Gemma 4:31B)' : 'You (Research Analyst)'}
                     </span>
                     {msg.source && (
-                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-white/5 text-white/50 uppercase">
-                        {msg.source === 'ollama-gemma4-cloud' ? 'Ollama Live' : msg.source === 'simulated-preview' ? 'Preview Kernel' : 'Error'}
+                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-white/5 text-[#42C98B] uppercase">
+                        {msg.source === 'gemma4-cloud' ? 'Gemma 4 Live' : 'Error'}
                       </span>
                     )}
                   </div>
@@ -390,7 +303,7 @@ All analysis is strictly grounded in the loaded dataset. Select one of the resea
                     <button
                       onClick={() => handleCopyMessage(msg.id, msg.content)}
                       title="Copy message"
-                      className="hover:text-white transition-colors"
+                      className="hover:text-white transition-colors cursor-pointer"
                     >
                       {isCopied ? <Check className="w-3 h-3 text-[#42C98B]" /> : <Copy className="w-3 h-3" />}
                     </button>
@@ -445,7 +358,7 @@ All analysis is strictly grounded in the loaded dataset. Select one of the resea
         {isLoading && (
           <div className="flex items-center gap-3 text-xs font-mono text-white/60 p-3 bg-black/30 rounded-lg border border-white/5">
             <RefreshCw className="w-4 h-4 animate-spin text-[#FF7518]" />
-            <span>Gemma 4:31B Cloud is evaluating financial metrics via Ollama...</span>
+            <span>Google Gemma 4:31B is evaluating financial metrics...</span>
           </div>
         )}
 
@@ -462,7 +375,7 @@ All analysis is strictly grounded in the loaded dataset. Select one of the resea
       >
         <input
           type="text"
-          placeholder="Ask Gemma 4:31B Cloud about trends, volatility, risks, or comparisons..."
+          placeholder="Ask Google Gemma 4 about trends, volatility, risks, or comparisons..."
           value={inputQuestion}
           onChange={(e) => setInputQuestion(e.target.value)}
           disabled={isLoading}
@@ -472,7 +385,7 @@ All analysis is strictly grounded in the loaded dataset. Select one of the resea
         <button
           type="submit"
           disabled={isLoading || !inputQuestion.trim()}
-          className={`flex items-center gap-1.5 px-4 py-2.5 rounded-lg font-mono text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+          className={`flex items-center gap-1.5 px-4 py-2.5 rounded-lg font-mono text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer ${
             isHalloween
               ? 'bg-[#FF7518] text-black hover:bg-[#FF8A3D]'
               : 'bg-blue-600 text-white hover:bg-blue-500'

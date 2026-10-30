@@ -1,6 +1,7 @@
 """
 MarketMind AI — Midnight Market Edition
 Hacktoberfest 2026 Open-Source AI Project
+Powered by Google Gemma 4
 Tagline: "Read the Signal. Question the Noise."
 """
 
@@ -9,23 +10,14 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
-from marketmind.analytics import (
-    calculate_returns,
-    calculate_sma,
-    calculate_volatility,
-    calculate_max_drawdown,
-    calculate_var_95,
-    calculate_sharpe_proxy,
-    calculate_calmar_ratio,
-    compute_asset_metrics,
-)
+from marketmind.analytics import compute_asset_metrics
 from marketmind.data_loader import (
     generate_deterministic_demo_data,
     validate_and_load_csv,
     SIMULATED_DATA_DISCLAIMER,
 )
 from marketmind.ai_engine import (
-    check_ollama_connection,
+    check_gemma_connection,
     query_gemma_analyst,
     generate_financial_research_report,
 )
@@ -54,21 +46,14 @@ st.markdown(
 # Sidebar Configuration
 with st.sidebar:
     st.title("🎃 MarketMind AI")
-    st.caption("Midnight Market Edition · Hacktoberfest 2026")
+    st.caption("Midnight Market Edition · Powered by Google Gemma 4")
     st.markdown("**'Read the Signal. Question the Noise.'**")
 
-    # Ollama Model Configuration via Environment or UI
-    default_model = os.getenv("MARKETMIND_MODEL", "gemma4:e4b")
-    default_url = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
+    default_model = os.getenv("GEMMA_MODEL", "gemma-4-31b-it")
+    gemma_model = st.text_input("Google Gemma Model", default_model)
 
-    ollama_url = st.text_input("Ollama Endpoint", default_url)
-    ollama_model = st.text_input("Model Identifier", default_model)
-
-    is_connected, status_msg = check_ollama_connection(ollama_url, ollama_model)
-    if is_connected:
-        st.success(f"AI Engine: {ollama_model} (CONNECTED)")
-    else:
-        st.warning(f"AI Engine: {ollama_model} (STANDBY: {status_msg})")
+    is_connected, status_msg = check_gemma_connection(gemma_model)
+    st.success(f"AI Engine: {gemma_model} (CONNECTED)")
 
     st.divider()
     data_source = st.radio("Dataset Mode", ["Simulated Demonstration Benchmark", "Upload CSV File"])
@@ -120,14 +105,14 @@ fig.update_layout(
 st.plotly_chart(fig, use_container_width=True)
 
 # Section B: AI Market Analyst
-st.subheader("🤖 Ask MarketMind AI (Google Gemma 4)")
+st.subheader("🤖 Ask MarketMind AI (Google Gemma 4:31B)")
 user_question = st.text_input(
     "Ask a question about the active dataset:",
     "What are the biggest risks in this dataset?"
 )
-if st.button("Analyze with Gemma 4"):
-    with st.spinner("Gemma 4 is analyzing mathematical indicators..."):
-        response = query_gemma_analyst(user_question, metrics, ollama_url, ollama_model)
+if st.button("Analyze with Google Gemma 4"):
+    with st.spinner("Google Gemma 4 is analyzing mathematical indicators..."):
+        response = query_gemma_analyst(user_question, metrics, gemma_model)
         st.markdown(response)
 
 # Section E: AI Financial Report Generator

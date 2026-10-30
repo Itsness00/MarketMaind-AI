@@ -3,18 +3,17 @@
  * SPDX-License-Identifier: MIT
  * MarketMind AI — Main Application Entry Point
  * Midnight Market Edition — Hacktoberfest 2026
- * Powered by Google Gemma 4 and Ollama
+ * Powered by Google Gemma 4
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   generateDeterministicDemonstrationData,
   DEMO_ASSETS,
-  SIMULATION_DISCLAIMER,
 } from './data/demonstrationData';
 import { computeAssetMetrics } from './utils/analytics';
-import { testOllamaConnection, DEFAULT_OLLAMA_CONFIG } from './utils/aiEngine';
-import { MarketDataPoint, AssetMetrics, OllamaConfig } from './types/market';
+import { testGemmaConnection, DEFAULT_GEMMA_CONFIG } from './utils/aiEngine';
+import { MarketDataPoint, AssetMetrics, GemmaConfig } from './types/market';
 import { NavigationHeader } from './components/NavigationHeader';
 import { HeroSection } from './components/HeroSection';
 import { MarketOverview } from './components/MarketOverview';
@@ -31,9 +30,6 @@ import {
   Activity,
   ShieldAlert,
   FileText,
-  Github,
-  Terminal,
-  Sparkles,
 } from 'lucide-react';
 
 export default function App() {
@@ -49,8 +45,8 @@ export default function App() {
     'Deterministic Synthetic Benchmark (252 Trading Sessions)'
   );
 
-  // Ollama Config State
-  const [ollamaConfig, setOllamaConfig] = useState<OllamaConfig>(DEFAULT_OLLAMA_CONFIG);
+  // Google Gemma 4 Config State
+  const [gemmaConfig, setGemmaConfig] = useState<GemmaConfig>(DEFAULT_GEMMA_CONFIG);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isHacktoberfestOpen, setIsHacktoberfestOpen] = useState(false);
 
@@ -86,17 +82,16 @@ export default function App() {
     return assetSummaries.filter((a) => a.ticker !== activeTicker);
   }, [assetSummaries, activeTicker]);
 
-  // Probe Ollama connection on mount
+  // Verify Google Gemma 4 backend connection on mount
   useEffect(() => {
     let isMounted = true;
-    testOllamaConnection().then((res) => {
+    testGemmaConnection().then((res) => {
       if (isMounted) {
-        setOllamaConfig((prev) => ({
+        setGemmaConfig((prev) => ({
           ...prev,
           isConnected: res.connected,
-          model: res.model || 'gemma4:31b-cloud',
-          provider: res.provider || 'Ollama',
-          isCloudSandbox: res.isCloudSandbox,
+          model: res.model || 'Gemma 4:31B',
+          provider: res.provider || 'Google Gemma',
           modelAvailable: res.modelAvailable,
           modelsFound: res.modelsFound,
           message: res.message,
@@ -145,7 +140,7 @@ export default function App() {
         setActiveTab={setActiveTab}
         isHalloween={isHalloween}
         setIsHalloween={setIsHalloween}
-        ollamaConfig={ollamaConfig}
+        gemmaConfig={gemmaConfig}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenHacktoberfest={() => setIsHacktoberfestOpen(true)}
       />
@@ -154,7 +149,7 @@ export default function App() {
       <HeroSection
         onLaunchAnalysis={() => setActiveTab('overview')}
         onExploreAI={() => setActiveTab('analyst')}
-        ollamaConfig={ollamaConfig}
+        gemmaConfig={gemmaConfig}
         isHalloween={isHalloween}
         assetSummaries={assetSummaries}
         activeTicker={activeTicker}
@@ -214,7 +209,7 @@ export default function App() {
           <AIAnalystSection
             activeMetric={activeMetric}
             peerMetrics={peerMetrics}
-            ollamaConfig={ollamaConfig}
+            gemmaConfig={gemmaConfig}
             isHalloween={isHalloween}
             onNavigateToReport={() => setActiveTab('report')}
           />
@@ -257,7 +252,7 @@ export default function App() {
               <span>Midnight Market Edition</span>
             </div>
             <p className="text-[11px] text-white/40">
-              Read the Signal. Question the Noise. Built for Hacktoberfest 2026.
+              Read the Signal. Question the Noise. Powered by Google Gemma 4 · Hacktoberfest 2026.
             </p>
           </div>
 
@@ -266,29 +261,29 @@ export default function App() {
               onClick={() => setIsHacktoberfestOpen(true)}
               className="hover:text-white transition-colors"
             >
-              Architecture & Python Code
+              1-Click Launch & GitHub Code
             </button>
             <button
               onClick={() => setIsSettingsOpen(true)}
               className="hover:text-white transition-colors"
             >
-              Ollama Configuration
+              Google Gemma 4 Engine
             </button>
             <span className="text-white/30">MIT License</span>
           </div>
         </div>
       </footer>
 
-      {/* Settings Modal */}
+      {/* Google Gemma 4 Engine & Instant Link Modal */}
       <OllamaSettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
-        config={ollamaConfig}
-        onSaveConfig={setOllamaConfig}
+        config={gemmaConfig}
+        onSaveConfig={setGemmaConfig}
         isHalloween={isHalloween}
       />
 
-      {/* Hacktoberfest Showcase Modal */}
+      {/* Hacktoberfest / GitHub Instant Launch Modal */}
       <HacktoberfestModal
         isOpen={isHacktoberfestOpen}
         onClose={() => setIsHacktoberfestOpen(false)}

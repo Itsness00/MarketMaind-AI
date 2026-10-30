@@ -1,6 +1,6 @@
 {
   "name": "MarketMind AI — Midnight Market Edition",
-  "description": "Open-source financial intelligence platform for Hacktoberfest 2026 powered by Google Gemma 4 and Ollama. Analyze stock data, calculate financial metrics, evaluate risks, and generate AI research reports.",
+  "description": "Open-source financial intelligence platform for Hacktoberfest 2026 powered by Google Gemma 4. Analyze stock data, calculate financial metrics, evaluate risks, and generate AI research reports.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

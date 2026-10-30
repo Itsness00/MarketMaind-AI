@@ -51,13 +51,12 @@ export interface CorrelationMatrix {
   matrix: number[][];
 }
 
-export interface OllamaConfig {
+export interface GemmaConfig {
   baseUrl: string;
   model: string;
   provider: string;
   isConnected: boolean;
   isChecking: boolean;
-  isCloudSandbox?: boolean;
   modelAvailable?: boolean;
   modelsFound?: string[];
   lastChecked?: string;
@@ -71,7 +70,7 @@ export interface ChatMessage {
   content: string;
   timestamp: string;
   mathematicalContext?: Record<string, string | number>;
-  source?: 'ollama-gemma4-cloud' | 'simulated-preview' | 'error';
+  source?: 'gemma4-cloud' | 'error';
   isError?: boolean;
 }
 
