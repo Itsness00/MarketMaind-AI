@@ -1,0 +1,240 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Institutional financial analyst profile and terminal preferences.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the profile owner.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "fullName": {
+          "type": "string",
+          "description": "Analyst display name.",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "roleTitle": {
+          "type": "string",
+          "description": "Analyst role or desk title.",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "institution": {
+          "type": "string",
+          "description": "Financial institution or research desk.",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Verified analyst email address.",
+          "minLength": 3,
+          "maxLength": 160
+        },
+        "avatarInitials": {
+          "type": "string",
+          "description": "1-4 character initials for profile badge.",
+          "minLength": 1,
+          "maxLength": 4
+        },
+        "baseCurrency": {
+          "type": "string",
+          "description": "Preferred portfolio reporting currency.",
+          "enum": ["USD", "EUR", "GBP", "JPY", "CAD"]
+        },
+        "riskMandate": {
+          "type": "string",
+          "description": "Institutional risk mandate profile.",
+          "enum": ["CONSERVATIVE", "BALANCED_QUANT", "AGGRESSIVE_ALPHA", "TAIL_RISK_HEDGED"]
+        },
+        "preferredAIEngine": {
+          "type": "string",
+          "description": "Default AI engine selection.",
+          "enum": ["dual-gemma-gemini", "gemma-4-31b", "gemini-3.8-flash"]
+        },
+        "defaultRegion": {
+          "type": "string",
+          "description": "Default global market region filter.",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "liveStreamAutoStart": {
+          "type": "boolean",
+          "description": "Whether live market tick streaming starts automatically."
+        },
+        "bioNotes": {
+          "type": "string",
+          "description": "Analyst mandate notes and research thesis.",
+          "minLength": 0,
+          "maxLength": 500
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp."
+        }
+      },
+      "required": [
+        "ownerId",
+        "fullName",
+        "roleTitle",
+        "institution",
+        "email",
+        "avatarInitials",
+        "baseCurrency",
+        "riskMandate",
+        "preferredAIEngine",
+        "defaultRegion",
+        "liveStreamAutoStart",
+        "bioNotes",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "OpenSourceConnectorDoc": {
+      "title": "OpenSourceConnectorDoc",
+      "description": "User-configured open-source financial data, macro, or news connector.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the owner.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name of the open-source feed.",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "category": {
+          "type": "string",
+          "description": "Connector data domain.",
+          "enum": ["MARKET_DATA", "NEWS_WIRE", "MACRO_ECON", "ON_CHAIN_ALT", "AI_ENDPOINT"]
+        },
+        "endpointUrl": {
+          "type": "string",
+          "description": "HTTPS/HTTP URL of the open-source feed.",
+          "minLength": 8,
+          "maxLength": 300
+        },
+        "protocol": {
+          "type": "string",
+          "description": "Feed protocol type.",
+          "enum": ["REST_JSON", "RSS_XML", "GRAPHQL", "OPEN_API"]
+        },
+        "description": {
+          "type": "string",
+          "description": "Brief description of the open-source connector.",
+          "minLength": 1,
+          "maxLength": 250
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether the connector is active in the terminal."
+        },
+        "lastSyncStatus": {
+          "type": "string",
+          "description": "Verification status of the connector.",
+          "enum": ["VERIFIED", "OFFLINE", "UNTESTED"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp."
+        }
+      },
+      "required": [
+        "ownerId",
+        "name",
+        "category",
+        "endpointUrl",
+        "protocol",
+        "description",
+        "enabled",
+        "lastSyncStatus",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PortfolioPositionDoc": {
+      "title": "PortfolioPositionDoc",
+      "description": "Persisted equity portfolio holding for a signed-in user.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the owner.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ticker": {
+          "type": "string",
+          "description": "Stock ticker symbol.",
+          "minLength": 1,
+          "maxLength": 16,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "shares": {
+          "type": "number",
+          "description": "Number of shares held (> 0 and <= 1000000000)."
+        },
+        "avgCostPerShare": {
+          "type": "number",
+          "description": "Average cost basis per share (> 0 and <= 10000000)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp."
+        }
+      },
+      "required": [
+        "ownerId",
+        "ticker",
+        "shares",
+        "avgCostPerShare",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private analyst profile document keyed by Firebase Auth UID."
+    },
+    "/users/{userId}/connectors/{connectorId}": {
+      "schema": { "$ref": "#/entities/OpenSourceConnectorDoc" },
+      "description": "Custom open-source data and news connectors owned by the analyst."
+    },
+    "/users/{userId}/positions/{positionId}": {
+      "schema": { "$ref": "#/entities/PortfolioPositionDoc" },
+      "description": "Portfolio stock positions owned by the analyst."
+    }
+  }
+}

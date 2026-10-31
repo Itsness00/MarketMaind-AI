@@ -229,4 +229,55 @@ export interface PortfolioSummaryMetrics {
   positions: PortfolioPositionMetrics[];
 }
 
+export interface MarketNewsItem {
+  id: string;
+  headline: string;
+  summary: string;
+  source: string;
+  url: string;
+  publishedAt: string;
+  relatedTickers: string[];
+  category: 'EARNINGS' | 'MACRO' | 'AI & SEMIS' | 'GLOBAL MARKETS' | 'OPEN SOURCE FEED';
+  sentiment: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+  impactScore: number; // 1 to 100
+  aiTakeaway: string;
+}
 
+export interface OpenSourceConnector {
+  id: string;
+  name: string;
+  category: 'MARKET_DATA' | 'NEWS_WIRE' | 'MACRO_ECON' | 'ON_CHAIN_ALT' | 'AI_ENDPOINT';
+  endpointUrl: string;
+  protocol: 'REST_JSON' | 'RSS_XML' | 'GRAPHQL' | 'OPEN_API';
+  description: string;
+  enabled: boolean;
+  isCustom?: boolean;
+  lastSyncStatus?: 'VERIFIED' | 'OFFLINE' | 'UNTESTED';
+  lastSyncedAt?: string;
+  sampleFields?: string[];
+}
+
+export interface LiveTradeTick {
+  id: string;
+  ticker: string;
+  price: number;
+  size: number;
+  side: 'BUY' | 'SELL';
+  exchange: string;
+  timestamp: string;
+}
+
+export interface UserProfile {
+  fullName: string;
+  roleTitle: string;
+  institution: string;
+  email: string;
+  avatarInitials: string;
+  baseCurrency: 'USD' | 'EUR' | 'GBP' | 'JPY' | 'CAD';
+  riskMandate: 'CONSERVATIVE' | 'BALANCED_QUANT' | 'AGGRESSIVE_ALPHA' | 'TAIL_RISK_HEDGED';
+  preferredAIEngine: AIEngineSelection;
+  defaultRegion: 'ALL' | MarketRegion;
+  liveStreamAutoStart: boolean;
+  bioNotes: string;
+  updatedAt: string;
+}

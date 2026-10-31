@@ -22,34 +22,65 @@
   }
 }
 
-/* Subtle Midnight Market Ambient Effects */
-@keyframes fogDrift {
-  0% { transform: translateX(-5%) translateY(0px) scale(1); opacity: 0.22; }
-  50% { transform: translateX(5%) translateY(-10px) scale(1.05); opacity: 0.35; }
-  100% { transform: translateX(-5%) translateY(0px) scale(1); opacity: 0.22; }
+/* Riddle UI Design System Surface & Bento Utilities */
+:root {
+  --bg-canvas: #090C15;
+  --bg-surface: #0E1320;
+  --bg-elevated: #141B2D;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-active: rgba(59, 130, 246, 0.45);
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
 }
 
-@keyframes batFlutter {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  25% { transform: translateY(-4px) rotate(3deg); }
-  75% { transform: translateY(4px) rotate(-3deg); }
+body {
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
 }
 
-@keyframes pulseGlow {
-  0%, 100% { opacity: 0.6; filter: drop-shadow(0 0 12px rgba(255, 117, 24, 0.3)); }
-  50% { opacity: 0.95; filter: drop-shadow(0 0 20px rgba(255, 117, 24, 0.6)); }
+.riddle-canvas {
+  background-color: #090C15;
+  background-image:
+    radial-gradient(circle at 15% 0%, rgba(59, 130, 246, 0.07), transparent 38%),
+    radial-gradient(circle at 85% 0%, rgba(16, 185, 129, 0.05), transparent 35%);
 }
 
-.animate-fog {
-  animation: fogDrift 18s ease-in-out infinite;
+.riddle-panel {
+  background-color: #0E1320;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05), 0 10px 30px -10px rgba(0, 0, 0, 0.55);
+  border-radius: 1rem;
 }
 
-.animate-bat {
-  animation: batFlutter 4s ease-in-out infinite;
+.riddle-card {
+  background-color: #131A2A;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.04);
+  border-radius: 0.75rem;
 }
 
-.animate-glow {
-  animation: pulseGlow 4s ease-in-out infinite;
+.riddle-pill-group {
+  background-color: #090C15;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.75rem;
+  padding: 0.25rem;
+}
+
+/* Bottom-Pop Alert Notification Animation */
+@keyframes riddlePopFromBottom {
+  0% {
+    opacity: 0;
+    transform: translateY(32px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-pop-bottom {
+  animation: riddlePopFromBottom 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Accessibility: respect reduced motion preferences */
@@ -60,7 +91,7 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  .animate-fog, .animate-bat, .animate-glow {
+  .animate-pop-bottom {
     animation: none !important;
   }
 }

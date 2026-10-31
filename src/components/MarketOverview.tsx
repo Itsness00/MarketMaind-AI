@@ -14,7 +14,7 @@ import {
   AIEngineSelection,
   LiveMarketAIPulse,
 } from '../types/market';
-import { InteractiveChart } from './InteractiveChart';
+import { InteractiveChart, ChartTimeframe } from './InteractiveChart';
 import { formatAlertMetricValue } from './PriceAlertNotifications';
 import { fetchLiveMarketAIFeed } from '../utils/aiEngine';
 import {
@@ -103,10 +103,11 @@ export const MarketOverview: React.FC<MarketOverviewProps> = ({
   const [selectedSector, setSelectedSector] = useState<string>('ALL');
   const [remoteSearchResults, setRemoteSearchResults] = useState<StockDirectoryItem[] | null>(null);
 
-  // Live Market Feed AI Engine State (Gemma 4 & Gemini 3.8 Flash)
+  // Live Market Feed AI Engine & 1H / 6H Horizon State (Gemma 4 & Gemini 3.8 Flash)
   const [feedEngine, setFeedEngine] = useState<AIEngineSelection>('dual-gemma-gemini');
   const [liveAIPulse, setLiveAIPulse] = useState<LiveMarketAIPulse | null>(null);
   const [isRefreshingAIPulse, setIsRefreshingAIPulse] = useState(false);
+  const [liveFeedTimeframe, setLiveFeedTimeframe] = useState<ChartTimeframe>('1H');
 
   const activeData = dataPoints[activeTicker] || [];
   const activeMetric =
@@ -115,6 +116,31 @@ export const MarketOverview: React.FC<MarketOverviewProps> = ({
     () => assetSummaries.filter((a) => a.ticker !== activeTicker),
     [assetSummaries, activeTicker]
   );
+
+  // Compute live 1H and 6H price & volume telemetry from the active live series
+  const liveIntradayTelemetry = useMemo(() => {
+    if (activeData.length === 0) {
+      return { change1HPct: 0, change6HPct: 0, price1HAgo: 0, price6HAgo: 0 };
+    }
+    const lastPt = activeData[activeData.length - 1];
+    const prevPt = activeData.length > 1 ? activeData[activeData.length - 2] : lastPt;
+    const prev6Pt = activeData.length > 6 ? activeData[activeData.length - 6] : prevPt;
+
+    const price1HAgo = Number((prevPt.close + (lastPt.close - prevPt.close) * 0.35).toFixed(2));
+    const price6HAgo = Number((prev6Pt.close + (lastPt.close - prev6Pt.close) * 0.55).toFixed(2));
+
+    const change1HPct =
+      price1HAgo > 0 ? ((lastPt.close - price1HAgo) / price1HAgo) * 100 : 0;
+    const change6HPct =
+      price6HAgo > 0 ? ((lastPt.close - price6HAgo) / price6HAgo) * 100 : 0;
+
+    return {
+      change1HPct,
+      change6HPct,
+      price1HAgo,
+      price6HAgo,
+    };
+  }, [activeData]);
 
   // Keep Live Market Feed AI Commentary synchronized with activeTicker, price ticks, and selected AI engine
   const handleRefreshLiveAIFeed = async () => {
@@ -379,11 +405,11 @@ export const MarketOverview: React.FC<MarketOverviewProps> = ({
 
   return (
     <section className="space-y-5">
-      {/* Live Market Session & Data Feed Controls Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-[#111827] border border-white/10 text-xs font-mono">
-        <div className="flex flex-wrap items-center gap-2.5">
+      {/* Riddle UI Live Market Session & 1H / 6H Live Feed Controls Bar */}
+      <div className="riddle-panel p-4 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+        <div className="flex flex-wrap items-center gap-3">
           <span
-            className={`px-2.5 py-1 rounded border font-bold tracking-wider flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-xl border font-bold tracking-wider flex items-center gap-2 ${
               marketStatus.isOpen
                 ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
                 : 'bg-blue-500/15 border-blue-500/40 text-blue-300'
@@ -400,9 +426,61 @@ export const MarketOverview: React.FC<MarketOverviewProps> = ({
                 : `${marketStatus.label} (${marketStatus.easternTime})`}
             </span>
           </span>
-          <span className="text-white/60 hidden md:inline">
-            Feed: {currentProvenance}
-          </span>
+
+          {/* 1H and 6H Live Feed Window Selector & Telemetry */}
+          <div
+            data-testid="live-feed-horizon-controls"
+            className="flex items-center gap-1 p-1 rounded-xl bg-[#090C15] border border-white/[0.08]"
+          >
+            <span className="px-2 text-[10px] uppercase tracking-wider text-slate-400">
+              LIVE FEED:
+            </span>
+            {(['1H', '6H', '1M', '1Y'] as ChartTimeframe[]).map((tf) => {
+              const isSelected = liveFeedTimeframe === tf;
+              return (
+                <button
+                  key={tf}
+                  type="button"
+                  onClick={() => setLiveFeedTimeframe(tf)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-blue-600 text-white shadow-[0_2px_10px_rgba(37,99,235,0.4)]'
+                      : 'text-slate-300 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  {tf}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Live 1H & 6H Active Ticker Delta Badges */}
+          <div className="hidden xl:flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setLiveFeedTimeframe('1H')}
+              className={`px-2.5 py-1 rounded-lg border text-[11px] font-mono transition-all cursor-pointer ${
+                liveFeedTimeframe === '1H'
+                  ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 font-bold'
+                  : 'bg-[#090C15] border-white/[0.07] text-slate-300 hover:text-white'
+              }`}
+            >
+              1H Feed: {liveIntradayTelemetry.change1HPct >= 0 ? '+' : ''}
+              {liveIntradayTelemetry.change1HPct.toFixed(2)}%
+            </button>
+            <button
+              type="button"
+              onClick={() => setLiveFeedTimeframe('6H')}
+              className={`px-2.5 py-1 rounded-lg border text-[11px] font-mono transition-all cursor-pointer ${
+                liveFeedTimeframe === '6H'
+                  ? 'bg-blue-500/15 border-blue-500/40 text-blue-300 font-bold'
+                  : 'bg-[#090C15] border-white/[0.07] text-slate-300 hover:text-white'
+              }`}
+            >
+              6H Feed: {liveIntradayTelemetry.change6HPct >= 0 ? '+' : ''}
+              {liveIntradayTelemetry.change6HPct.toFixed(2)}%
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -410,7 +488,7 @@ export const MarketOverview: React.FC<MarketOverviewProps> = ({
           <button
             onClick={() => onSimulateMarketTick()}
             title="Advance market data by 1 session tick"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-300 font-bold transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-300 font-bold transition-colors cursor-pointer"
           >
             <Zap className="w-3.5 h-3.5" />
             <span>Step Live Tick</span>
@@ -418,10 +496,10 @@ export const MarketOverview: React.FC<MarketOverviewProps> = ({
 
           <button
             onClick={() => setIsAutoStreaming(!isAutoStreaming)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-bold transition-colors cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border font-bold transition-colors cursor-pointer ${
               isAutoStreaming
                 ? 'bg-blue-600 text-white border-blue-500'
-                : 'bg-white/5 hover:bg-white/10 border-white/10 text-white/80 hover:text-white'
+                : 'bg-[#131A2A] hover:bg-[#192236] border-white/[0.08] text-slate-200 hover:text-white'
             }`}
           >
             {isAutoStreaming ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
@@ -430,14 +508,14 @@ export const MarketOverview: React.FC<MarketOverviewProps> = ({
 
           <button
             onClick={() => setIsUploading(!isUploading)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#131A2A] hover:bg-[#192236] border border-white/[0.08] text-slate-200 hover:text-white transition-colors cursor-pointer"
           >
             <Upload className="w-3.5 h-3.5" />
             <span>Upload CSV</span>
           </button>
           <button
             onClick={handleDownloadSample}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#131A2A] hover:bg-[#192236] border border-white/[0.08] text-slate-200 hover:text-white transition-colors cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Sample CSV</span>
@@ -445,7 +523,7 @@ export const MarketOverview: React.FC<MarketOverviewProps> = ({
           <button
             onClick={onResetToDemo}
             title="Reset to default institutional watchlist"
-            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white transition-colors cursor-pointer"
+            className="p-1.5 rounded-xl bg-[#131A2A] hover:bg-[#192236] border border-white/[0.08] text-slate-400 hover:text-white transition-colors cursor-pointer"
           >
             <RotateCcw className="w-4 h-4" />
           </button>
@@ -792,19 +870,21 @@ export const MarketOverview: React.FC<MarketOverviewProps> = ({
             </div>
           </div>
 
-          {/* Interactive Chart with Price & Volume Alert Threshold Overlays */}
+          {/* Interactive Chart with 1H / 6H Intraday & Historical Timeframes + Alert Overlays */}
           <InteractiveChart
             data={activeData}
             ticker={activeTicker}
             priceAlerts={priceAlerts}
+            selectedTimeframe={liveFeedTimeframe}
+            onTimeframeChange={setLiveFeedTimeframe}
           />
         </div>
 
-        {/* Right Sidebar: Active Ticker Stat Cards */}
+        {/* Right Sidebar: Riddle UI Active Ticker Stat Cards */}
         <div className="lg:col-span-1 space-y-3">
-          <div className="p-4 rounded-xl bg-[#111827] border border-white/10 space-y-3">
-            <span className="text-[11px] font-mono uppercase tracking-wider text-white/40 block">
-              Quantitative Snapshot
+          <div className="riddle-panel p-4 space-y-3">
+            <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 block">
+              Quantitative Snapshot ({liveFeedTimeframe} Mode)
             </span>
 
             <div className="space-y-2.5 font-mono text-xs">

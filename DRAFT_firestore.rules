@@ -1,0 +1,318 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Hardened Global Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isOwner(userId) {
+      return isVerifiedUser() && request.auth.uid == userId;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function hasParentUser(userId) {
+      return exists(/databases/$(database)/documents/users/$(userId)) &&
+        get(/databases/$(database)/documents/users/$(userId)).data.ownerId == request.auth.uid;
+    }
+
+    // 3. Entity Validation Blueprints
+    function isValidUserProfile(data) {
+      return data.keys().hasAll([
+          'ownerId',
+          'fullName',
+          'roleTitle',
+          'institution',
+          'email',
+          'avatarInitials',
+          'baseCurrency',
+          'riskMandate',
+          'preferredAIEngine',
+          'defaultRegion',
+          'liveStreamAutoStart',
+          'bioNotes',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'ownerId',
+          'fullName',
+          'roleTitle',
+          'institution',
+          'email',
+          'avatarInitials',
+          'baseCurrency',
+          'riskMandate',
+          'preferredAIEngine',
+          'defaultRegion',
+          'liveStreamAutoStart',
+          'bioNotes',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.ownerId is string &&
+        data.ownerId.size() >= 1 &&
+        data.ownerId.size() <= 128 &&
+        data.ownerId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.ownerId == request.auth.uid &&
+        data.fullName is string &&
+        data.fullName.size() >= 1 &&
+        data.fullName.size() <= 80 &&
+        data.roleTitle is string &&
+        data.roleTitle.size() >= 1 &&
+        data.roleTitle.size() <= 80 &&
+        data.institution is string &&
+        data.institution.size() >= 1 &&
+        data.institution.size() <= 100 &&
+        data.email is string &&
+        data.email.size() >= 3 &&
+        data.email.size() <= 160 &&
+        data.avatarInitials is string &&
+        data.avatarInitials.size() >= 1 &&
+        data.avatarInitials.size() <= 4 &&
+        data.baseCurrency is string &&
+        data.baseCurrency in ['USD', 'EUR', 'GBP', 'JPY', 'CAD'] &&
+        data.riskMandate is string &&
+        data.riskMandate in ['CONSERVATIVE', 'BALANCED_QUANT', 'AGGRESSIVE_ALPHA', 'TAIL_RISK_HEDGED'] &&
+        data.preferredAIEngine is string &&
+        data.preferredAIEngine in ['dual-gemma-gemini', 'gemma-4-31b', 'gemini-3.8-flash'] &&
+        data.defaultRegion is string &&
+        data.defaultRegion.size() >= 1 &&
+        data.defaultRegion.size() <= 40 &&
+        data.liveStreamAutoStart is bool &&
+        data.bioNotes is string &&
+        data.bioNotes.size() <= 500 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidOpenSourceConnector(data) {
+      return data.keys().hasAll([
+          'ownerId',
+          'name',
+          'category',
+          'endpointUrl',
+          'protocol',
+          'description',
+          'enabled',
+          'lastSyncStatus',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'ownerId',
+          'name',
+          'category',
+          'endpointUrl',
+          'protocol',
+          'description',
+          'enabled',
+          'lastSyncStatus',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.ownerId is string &&
+        data.ownerId.size() >= 1 &&
+        data.ownerId.size() <= 128 &&
+        data.ownerId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.ownerId == request.auth.uid &&
+        data.name is string &&
+        data.name.size() >= 1 &&
+        data.name.size() <= 80 &&
+        data.category is string &&
+        data.category in ['MARKET_DATA', 'NEWS_WIRE', 'MACRO_ECON', 'ON_CHAIN_ALT', 'AI_ENDPOINT'] &&
+        data.endpointUrl is string &&
+        data.endpointUrl.size() >= 8 &&
+        data.endpointUrl.size() <= 300 &&
+        data.protocol is string &&
+        data.protocol in ['REST_JSON', 'RSS_XML', 'GRAPHQL', 'OPEN_API'] &&
+        data.description is string &&
+        data.description.size() >= 1 &&
+        data.description.size() <= 250 &&
+        data.enabled is bool &&
+        data.lastSyncStatus is string &&
+        data.lastSyncStatus in ['VERIFIED', 'OFFLINE', 'UNTESTED'] &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidPortfolioPosition(data) {
+      return data.keys().hasAll([
+          'ownerId',
+          'ticker',
+          'shares',
+          'avgCostPerShare',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'ownerId',
+          'ticker',
+          'shares',
+          'avgCostPerShare',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.ownerId is string &&
+        data.ownerId.size() >= 1 &&
+        data.ownerId.size() <= 128 &&
+        data.ownerId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.ownerId == request.auth.uid &&
+        data.ticker is string &&
+        data.ticker.size() >= 1 &&
+        data.ticker.size() <= 16 &&
+        data.ticker.matches('^[a-zA-Z0-9_\\-]+$') &&
+        (data.shares is int || data.shares is float) &&
+        data.shares > 0 &&
+        data.shares <= 1000000000 &&
+        (data.avgCostPerShare is int || data.avgCostPerShare is float) &&
+        data.avgCostPerShare > 0 &&
+        data.avgCostPerShare <= 10000000 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    // 4. Master User Profile Collection (/users/{userId})
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId) && existing().ownerId == request.auth.uid;
+
+      allow create: if isOwner(userId) &&
+        isValidId(userId) &&
+        isValidUserProfile(incoming()) &&
+        incoming().ownerId == userId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+
+      allow update: if isOwner(userId) &&
+        isValidId(userId) &&
+        isValidUserProfile(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'fullName',
+          'roleTitle',
+          'institution',
+          'email',
+          'avatarInitials',
+          'baseCurrency',
+          'riskMandate',
+          'preferredAIEngine',
+          'defaultRegion',
+          'liveStreamAutoStart',
+          'bioNotes',
+          'updatedAt'
+        ]);
+
+      allow delete: if isOwner(userId) && isValidId(userId) && existing().ownerId == request.auth.uid;
+
+      // 5. Subcollection: Open-Source Connectors (/users/{userId}/connectors/{connectorId})
+      match /connectors/{connectorId} {
+        allow get: if isOwner(userId) &&
+          isValidId(userId) &&
+          isValidId(connectorId) &&
+          existing().ownerId == request.auth.uid &&
+          hasParentUser(userId);
+
+        allow list: if isOwner(userId) &&
+          existing().ownerId == request.auth.uid;
+
+        allow create: if isOwner(userId) &&
+          isValidId(userId) &&
+          isValidId(connectorId) &&
+          isValidOpenSourceConnector(incoming()) &&
+          incoming().ownerId == userId &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          hasParentUser(userId);
+
+        allow update: if isOwner(userId) &&
+          isValidId(userId) &&
+          isValidId(connectorId) &&
+          isValidOpenSourceConnector(incoming()) &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'name',
+            'category',
+            'endpointUrl',
+            'protocol',
+            'description',
+            'enabled',
+            'lastSyncStatus',
+            'updatedAt'
+          ]) &&
+          hasParentUser(userId);
+
+        allow delete: if isOwner(userId) &&
+          isValidId(userId) &&
+          isValidId(connectorId) &&
+          existing().ownerId == request.auth.uid &&
+          hasParentUser(userId);
+      }
+
+      // 6. Subcollection: Portfolio Positions (/users/{userId}/positions/{positionId})
+      match /positions/{positionId} {
+        allow get: if isOwner(userId) &&
+          isValidId(userId) &&
+          isValidId(positionId) &&
+          existing().ownerId == request.auth.uid &&
+          hasParentUser(userId);
+
+        allow list: if isOwner(userId) &&
+          existing().ownerId == request.auth.uid;
+
+        allow create: if isOwner(userId) &&
+          isValidId(userId) &&
+          isValidId(positionId) &&
+          isValidPortfolioPosition(incoming()) &&
+          incoming().ownerId == userId &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          hasParentUser(userId);
+
+        allow update: if isOwner(userId) &&
+          isValidId(userId) &&
+          isValidId(positionId) &&
+          isValidPortfolioPosition(incoming()) &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'shares',
+            'avgCostPerShare',
+            'updatedAt'
+          ]) &&
+          hasParentUser(userId);
+
+        allow delete: if isOwner(userId) &&
+          isValidId(userId) &&
+          isValidId(positionId) &&
+          existing().ownerId == request.auth.uid &&
+          hasParentUser(userId);
+      }
+    }
+  }
+}

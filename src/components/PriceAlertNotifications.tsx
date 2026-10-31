@@ -35,14 +35,15 @@ export const PriceAlertNotifications: React.FC<PriceAlertNotificationsProps> = (
   return (
     <div
       aria-live="assertive"
-      className="fixed top-20 right-4 sm:right-6 z-50 w-full max-w-sm space-y-3 pointer-events-none"
+      data-testid="bottom-alert-stack"
+      className="fixed bottom-5 right-4 sm:right-6 z-50 w-full max-w-md flex flex-col gap-3 pointer-events-none"
     >
-      {/* Top Batch Header when multiple notifications are visible */}
+      {/* Batch Header when multiple notifications are visible */}
       {notifications.length > 1 && (
-        <div className="pointer-events-auto flex items-center justify-between px-3.5 py-2 rounded-xl bg-[#0B0F19]/95 border border-white/15 shadow-xl backdrop-blur-md text-[11px] font-mono">
-          <span className="text-white font-bold flex items-center gap-1.5">
+        <div className="pointer-events-auto flex items-center justify-between px-4 py-2.5 rounded-xl bg-[#0E1320]/95 border border-white/15 shadow-2xl backdrop-blur-xl text-[11px] font-mono animate-pop-bottom">
+          <span className="text-white font-bold flex items-center gap-2">
             <BellRing className="w-3.5 h-3.5 text-blue-400 animate-bounce" />
-            <span>{notifications.length} MARKET ALERTS TRIGGERED</span>
+            <span>{notifications.length} MARKET ALERTS POPPED (BOTTOM FEED)</span>
           </span>
           <button
             onClick={onDismissAll}
@@ -66,12 +67,12 @@ export const PriceAlertNotifications: React.FC<PriceAlertNotificationsProps> = (
           <div
             key={notif.id}
             role="alert"
-            className={`pointer-events-auto rounded-2xl p-4 border shadow-2xl backdrop-blur-xl transition-all animate-in fade-in slide-in-from-right-5 duration-200 ${
+            className={`pointer-events-auto rounded-2xl p-4 border shadow-2xl backdrop-blur-xl transition-all animate-pop-bottom ${
               isVolume
-                ? 'bg-[#171124]/95 border-violet-500/70 shadow-[0_0_25px_rgba(139,92,246,0.3)]'
+                ? 'bg-[#141126]/95 border-violet-500/70 shadow-[0_12px_35px_rgba(139,92,246,0.35)]'
                 : isAbove
-                ? 'bg-[#0D1A16]/95 border-emerald-500/60 shadow-[0_0_25px_rgba(16,185,129,0.25)]'
-                : 'bg-[#1F0E13]/95 border-red-500/60 shadow-[0_0_25px_rgba(239,68,68,0.25)]'
+                ? 'bg-[#0C1A17]/95 border-emerald-500/60 shadow-[0_12px_35px_rgba(16,185,129,0.28)]'
+                : 'bg-[#1E0E14]/95 border-red-500/60 shadow-[0_12px_35px_rgba(239,68,68,0.28)]'
             }`}
           >
             {/* Header Row */}

@@ -45,7 +45,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 }) => {
   return (
     <section className="relative z-10 w-full py-5 px-6 bg-gradient-to-b from-[#0F172A]/85 to-[#0B0F19] flex flex-col justify-center">
-      <div className="max-w-7xl mx-auto w-full space-y-5">
+      <div className="max-w-[1440px] mx-auto w-full space-y-5">
         {/* Institutional Exchange & Global Session Status Banner */}
         <div className="flex flex-wrap items-center gap-2.5 text-[11px] font-mono">
           <div
@@ -102,7 +102,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             <p className="text-sm sm:text-[15px] text-white/75 max-w-2xl leading-relaxed font-sans">
               Analyze any publicly traded stock across NYSE and NASDAQ with real-time market session
               streaming, automated price & volume spike alerts, institutional risk modeling, and
-              grounded financial intelligence powered by Google Gemma 4:31B & Google Gemini 3.8 Flash.
+              grounded financial intelligence powered by Google Gemma 4:31B.
             </p>
 
             {/* Primary Navigation Buttons to Launch Directly into Workspaces */}
@@ -114,6 +114,15 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               >
                 <span>Open Market Terminal</span>
                 <ArrowRight className="w-4 h-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onNavigateTab('news')}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-mono text-xs uppercase tracking-wider font-semibold text-white bg-sky-600/20 hover:bg-sky-600/30 border border-sky-500/40 transition-all cursor-pointer"
+              >
+                <Radio className="w-3.5 h-3.5 text-sky-400" />
+                <span>Live News & Open Sources</span>
               </button>
 
               <button
@@ -139,6 +148,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             <div className="flex flex-wrap items-center gap-2 pt-0.5">
               {[
                 { id: 'overview', label: 'Global Markets Directory', icon: BarChart2 },
+                { id: 'news', label: 'Open-Source Connectors', icon: Globe2 },
                 { id: 'analytics', label: 'Quantitative Suite', icon: Activity },
                 { id: 'risk', label: 'Risk & Stress Lab', icon: ShieldAlert },
                 { id: 'report', label: '9-Section AI Reports', icon: FileText },
