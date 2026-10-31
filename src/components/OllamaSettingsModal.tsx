@@ -7,14 +7,13 @@
 import React, { useState } from 'react';
 import { GemmaConfig } from '../types/market';
 import { testGemmaConnection } from '../utils/aiEngine';
-import { X, CheckCircle2, RefreshCw, Cpu, Copy, Check, ExternalLink, Sparkles } from 'lucide-react';
+import { X, CheckCircle2, RefreshCw, Cpu, Copy, Check, ExternalLink, Globe2 } from 'lucide-react';
 
 interface OllamaSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   config: GemmaConfig;
   onSaveConfig: (newConfig: GemmaConfig) => void;
-  isHalloween: boolean;
 }
 
 const LIVE_APP_URL = 'https://ais-pre-6dzexkedmslg3guya2gsum-740787892008.us-west2.run.app';
@@ -25,7 +24,6 @@ export const OllamaSettingsModal: React.FC<OllamaSettingsModalProps> = ({
   onClose,
   config,
   onSaveConfig,
-  isHalloween,
 }) => {
   const [model, setModel] = useState(config.model || 'Gemma 4:31B');
   const [isTesting, setIsTesting] = useState(false);
@@ -75,11 +73,11 @@ export const OllamaSettingsModal: React.FC<OllamaSettingsModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-2xl bg-[#161920] border border-white/15 p-6 shadow-2xl space-y-5">
+      <div className="w-full max-w-lg rounded-2xl bg-[#111827] border border-white/15 p-6 shadow-2xl space-y-5">
         {/* Modal Header */}
         <div className="flex items-center justify-between pb-3 border-b border-white/10">
           <div className="flex items-center gap-2">
-            <Cpu className="w-5 h-5 text-[#FF7518]" />
+            <Cpu className="w-5 h-5 text-blue-400" />
             <h3 className="text-base font-display font-bold text-white tracking-tight">
               Google Gemma 4:31B Engine & Instant Link
             </h3>
@@ -95,7 +93,7 @@ export const OllamaSettingsModal: React.FC<OllamaSettingsModalProps> = ({
         {/* Active Status Banner */}
         <div className="p-3.5 rounded-xl bg-emerald-950/30 border border-emerald-500/30 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <CheckCircle2 className="w-5 h-5 text-[#42C98B] shrink-0" />
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
             <div className="font-mono text-xs">
               <div className="text-white font-bold">GOOGLE GEMMA 4:31B — CONNECTED</div>
               <div className="text-emerald-300/80 text-[11px]">
@@ -103,24 +101,24 @@ export const OllamaSettingsModal: React.FC<OllamaSettingsModalProps> = ({
               </div>
             </div>
           </div>
-          <span className="px-2 py-0.5 rounded bg-[#42C98B]/20 text-[#42C98B] font-mono text-[10px] font-bold">
+          <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono text-[10px] font-bold">
             ACTIVE
           </span>
         </div>
 
         {/* Direct 1-Click Open From Link */}
         <div className="space-y-3 font-mono text-xs">
-          <div className="p-3.5 rounded-xl bg-black/50 border border-[#FF7518]/40 space-y-2">
+          <div className="p-3.5 rounded-xl bg-black/50 border border-blue-500/40 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] uppercase tracking-wider text-[#FF7518] font-bold flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Direct App Link (Just Click to Open)</span>
+              <span className="text-[11px] uppercase tracking-wider text-blue-400 font-bold flex items-center gap-1.5">
+                <Globe2 className="w-3.5 h-3.5" />
+                <span>Direct App Link (Click to Open)</span>
               </span>
               <a
                 href={LIVE_APP_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-[11px] text-[#42C98B] hover:underline font-bold"
+                className="inline-flex items-center gap-1 text-[11px] text-emerald-400 hover:underline font-bold"
               >
                 <span>Open App Link</span>
                 <ExternalLink className="w-3 h-3" />
@@ -134,9 +132,7 @@ export const OllamaSettingsModal: React.FC<OllamaSettingsModalProps> = ({
                 onClick={() => handleCopy('link', LIVE_APP_URL)}
                 className={`px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 shrink-0 cursor-pointer ${
                   copiedId === 'link'
-                    ? 'bg-[#42C98B] text-black'
-                    : isHalloween
-                    ? 'bg-[#FF7518] text-black hover:bg-[#FF8A3D]'
+                    ? 'bg-emerald-500 text-black'
                     : 'bg-blue-600 text-white hover:bg-blue-500'
                 }`}
               >
@@ -149,17 +145,17 @@ export const OllamaSettingsModal: React.FC<OllamaSettingsModalProps> = ({
           {/* 1-Click Copy Code to Open Local App */}
           <div className="p-3.5 rounded-xl bg-black/50 border border-white/10 space-y-2">
             <span className="text-[11px] uppercase tracking-wider text-white/60 font-bold block">
-              1-Word Copy Code to Open Locally
+              Short Code to Open Locally
             </span>
             <div className="flex items-center gap-2">
-              <code className="flex-1 px-2.5 py-1.5 rounded bg-black/70 border border-white/10 text-[#42C98B] text-xs font-bold select-all">
+              <code className="flex-1 px-2.5 py-1.5 rounded bg-black/70 border border-white/10 text-emerald-400 text-xs font-bold select-all">
                 {QUICK_START_CMD}
               </code>
               <button
                 onClick={() => handleCopy('cmd', QUICK_START_CMD)}
                 className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold flex items-center gap-1 shrink-0 cursor-pointer"
               >
-                {copiedId === 'cmd' ? <Check className="w-3.5 h-3.5 text-[#42C98B]" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedId === 'cmd' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copiedId === 'cmd' ? 'Copied!' : 'Copy Code'}</span>
               </button>
             </div>
@@ -173,7 +169,7 @@ export const OllamaSettingsModal: React.FC<OllamaSettingsModalProps> = ({
             <select
               value={model}
               onChange={(e) => setModel(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-black/50 border border-white/10 text-white focus:outline-none focus:border-white/30"
+              className="w-full px-3 py-2 rounded-lg bg-black/50 border border-white/10 text-white focus:outline-none focus:border-blue-500"
             >
               <option value="Gemma 4:31B">Google Gemma 4:31B (31B Instruct Cloud)</option>
               <option value="Gemma 4:27B">Google Gemma 4:27B (27B Research Instruct)</option>
@@ -212,11 +208,7 @@ export const OllamaSettingsModal: React.FC<OllamaSettingsModalProps> = ({
             </button>
             <button
               onClick={handleSave}
-              className={`px-4 py-2 rounded-lg font-bold transition-all cursor-pointer ${
-                isHalloween
-                  ? 'bg-[#FF7518] text-black hover:bg-[#FF8A3D]'
-                  : 'bg-blue-600 text-white hover:bg-blue-500'
-              }`}
+              className="px-4 py-2 rounded-lg font-bold transition-all bg-blue-600 text-white hover:bg-blue-500 cursor-pointer"
             >
               Save
             </button>

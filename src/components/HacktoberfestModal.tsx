@@ -6,12 +6,11 @@
  */
 
 import React, { useState } from 'react';
-import { X, Copy, Check, FileCode, Download, Play, ExternalLink, Sparkles } from 'lucide-react';
+import { X, Copy, Check, FileCode, Download, Play, ExternalLink, Globe2 } from 'lucide-react';
 
 interface HacktoberfestModalProps {
   isOpen: boolean;
   onClose: () => void;
-  isHalloween: boolean;
 }
 
 const LIVE_APP_URL = 'https://ais-pre-6dzexkedmslg3guya2gsum-740787892008.us-west2.run.app';
@@ -21,11 +20,10 @@ const PYTHON_CODE_FILES: Record<string, { filename: string; code: string; desc: 
   'README.md': {
     filename: 'README.md',
     desc: 'Instant Link & 1-Copy Code to open MarketMind AI immediately',
-    code: `# MarketMind AI — Midnight Market Edition
-### Hacktoberfest 2026 Open-Source AI Project
+    code: `# MarketMind AI — Institutional Financial Intelligence Platform
 **Tagline:** *"Read the Signal. Question the Noise."*
 
-MarketMind AI is an open-source financial intelligence platform powered by **Google Gemma 4:31B**.
+MarketMind AI is an official open-source financial intelligence platform powered by **Google Gemma 4:31B** with universal NYSE & NASDAQ equity coverage, real-time market session streaming, and automated price & volume spike alerts.
 
 ---
 
@@ -52,7 +50,8 @@ Or on Windows 11, simply double-click **\`start-marketmind.bat\`** to open \`htt
 - **AI Model:** Google Gemma 4:31B
 - **Provider:** Google Gemma
 - **Status:** Connected out of the box (no external local daemon required)
-- **Capabilities:** Historical Return & Volatility Analysis, Maximum Drawdown Stress Testing, Multi-Asset Comparison, and 9-Section Institutional Financial Reports.
+- **Market Coverage:** All NYSE & NASDAQ equities + live market hours detection (9:30 AM – 4:00 PM ET)
+- **Capabilities:** Historical Return & Volatility Analysis, Price & Volume Spike Alerts, Maximum Drawdown Stress Testing, Multi-Asset Comparison, and 9-Section Institutional Financial Reports.
 
 ---
 
@@ -64,9 +63,9 @@ Published under the **MIT License**. Google Gemma model weights are subject to t
     filename: 'start-marketmind.bat',
     desc: '1-Click Windows 11 launcher — just double-click to open the app in your browser',
     code: `@echo off
-title MarketMind AI — Midnight Market Edition (Google Gemma 4:31B)
+title MarketMind AI — Institutional Financial Terminal (Google Gemma 4:31B)
 echo ============================================================================
-echo   MARKETMIND AI — MIDNIGHT MARKET EDITION
+echo   MARKETMIND AI — INSTITUTIONAL FINANCIAL TERMINAL
 echo   Powered by Google Gemma 4:31B
 echo ============================================================================
 echo.
@@ -89,8 +88,7 @@ call npm start
     filename: 'app.py',
     desc: 'Python Streamlit UI application powered by Google Gemma 4',
     code: `"""
-MarketMind AI — Midnight Market Edition
-Hacktoberfest 2026 Open-Source AI Project
+MarketMind AI — Institutional Financial Intelligence Terminal
 Powered by Google Gemma 4
 Tagline: "Read the Signal. Question the Noise."
 """
@@ -113,25 +111,25 @@ from marketmind.ai_engine import (
 )
 
 st.set_page_config(
-    page_title="MarketMind AI — Midnight Market Edition",
-    page_icon="🎃",
+    page_title="MarketMind AI — Institutional Financial Terminal",
+    page_icon="📈",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
 with st.sidebar:
-    st.title("🎃 MarketMind AI")
-    st.caption("Midnight Market Edition · Powered by Google Gemma 4")
+    st.title("📈 MarketMind AI")
+    st.caption("Institutional Terminal · Powered by Google Gemma 4")
     
     gemma_model = os.getenv("GEMMA_MODEL", "gemma-4-31b-it")
     is_connected, status_msg = check_gemma_connection(gemma_model)
     st.success(f"AI Engine: {gemma_model} (CONNECTED)")
         
     st.divider()
-    data_source = st.radio("Dataset Mode", ["Simulated Demonstration Data", "Upload CSV File"])
+    data_source = st.radio("Dataset Mode", ["Institutional Market Feed", "Upload CSV File"])
 
-if data_source == "Simulated Demonstration Data":
-    st.info(f"⚠️ {SIMULATED_DATA_DISCLAIMER}")
+if data_source == "Institutional Market Feed":
+    st.info(f"📊 {SIMULATED_DATA_DISCLAIMER}")
     datasets = generate_deterministic_demo_data()
 else:
     uploaded = st.file_uploader("Upload CSV (Required: date, ticker, close)", type=["csv"])
@@ -176,7 +174,7 @@ MarketMind AI — Google Gemma 4 Engine
 System instructions, grounded prompt compilation, and Google Gemma 4 inference.
 """
 
-GEMMA_SYSTEM_INSTRUCTIONS = """You are MarketMind AI, an AI-powered financial research assistant powered by Google Gemma 4.
+GEMMA_SYSTEM_INSTRUCTIONS = """You are MarketMind AI, an institutional financial research assistant powered by Google Gemma 4.
 Use only financial data and context provided through the application.
 Never invent stock prices, economic statistics, company earnings, or financial events.
 Separate historical observations, mathematical calculations, hypotheses, and speculative forecasts.
@@ -297,7 +295,6 @@ def calculate_calmar_ratio(ann_return_pct: float, mdd_pct: float) -> float:
 export const HacktoberfestModal: React.FC<HacktoberfestModalProps> = ({
   isOpen,
   onClose,
-  isHalloween,
 }) => {
   const [activeFileKey, setActiveFileKey] = useState<string>('README.md');
   const [copied, setCopied] = useState(false);
@@ -332,15 +329,11 @@ export const HacktoberfestModal: React.FC<HacktoberfestModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-md">
-      <div className="w-full max-w-5xl h-[90vh] rounded-2xl bg-[#161920] border border-white/15 p-6 shadow-2xl flex flex-col space-y-4">
+      <div className="w-full max-w-5xl h-[90vh] rounded-2xl bg-[#111827] border border-white/15 p-6 shadow-2xl flex flex-col space-y-4">
         {/* Modal Top Bar */}
         <div className="flex items-center justify-between pb-3 border-b border-white/10 shrink-0">
           <div className="flex items-center gap-3">
-            <div
-              className={`p-2 rounded-lg font-bold text-xs ${
-                isHalloween ? 'bg-[#FF7518] text-black' : 'bg-blue-600 text-white'
-              }`}
-            >
+            <div className="p-2 rounded-lg font-bold text-xs bg-blue-600 text-white">
               GOOGLE GEMMA 4
             </div>
             <div>
@@ -348,7 +341,7 @@ export const HacktoberfestModal: React.FC<HacktoberfestModalProps> = ({
                 Instant App Link & 1-Click Copy Code
               </h3>
               <span className="text-xs font-mono text-white/50 block">
-                Open directly from the link below or copy the 2-word code to launch — no long commands
+                Open directly from the link below or copy the 2-word code to launch
               </span>
             </div>
           </div>
@@ -364,17 +357,17 @@ export const HacktoberfestModal: React.FC<HacktoberfestModalProps> = ({
         {/* Instant Open Link + 1-Click Copy Code Bar */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 shrink-0 font-mono text-xs">
           {/* Card 1: Direct Link to Open App Immediately */}
-          <div className="p-3.5 rounded-xl bg-black/60 border border-[#FF7518]/50 flex items-center justify-between gap-3">
+          <div className="p-3.5 rounded-xl bg-black/60 border border-blue-500/50 flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <span className="text-[10px] uppercase tracking-wider text-[#FF7518] font-bold flex items-center gap-1">
-                <Sparkles className="w-3 h-3" />
+              <span className="text-[10px] uppercase tracking-wider text-blue-400 font-bold flex items-center gap-1">
+                <Globe2 className="w-3 h-3" />
                 <span>Option 1: Open App Directly from Link</span>
               </span>
               <a
                 href={LIVE_APP_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-white hover:text-[#FF7518] underline text-[11px] truncate block mt-1 font-bold"
+                className="text-white hover:text-blue-400 underline text-[11px] truncate block mt-1 font-bold"
               >
                 {LIVE_APP_URL}
               </a>
@@ -384,11 +377,7 @@ export const HacktoberfestModal: React.FC<HacktoberfestModalProps> = ({
                 href={LIVE_APP_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`px-3 py-2 rounded-lg font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-                  isHalloween
-                    ? 'bg-[#FF7518] text-black hover:bg-[#FF8A3D]'
-                    : 'bg-blue-600 text-white hover:bg-blue-500'
-                }`}
+                className="px-3 py-2 rounded-lg font-bold flex items-center gap-1.5 transition-all bg-blue-600 text-white hover:bg-blue-500 cursor-pointer"
               >
                 <span>Open Link</span>
                 <ExternalLink className="w-3.5 h-3.5" />
@@ -398,15 +387,15 @@ export const HacktoberfestModal: React.FC<HacktoberfestModalProps> = ({
                 title="Copy Direct Link"
                 className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white cursor-pointer"
               >
-                {copiedQuickCmd === 'link' ? <Check className="w-3.5 h-3.5 text-[#42C98B]" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedQuickCmd === 'link' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
             </div>
           </div>
 
           {/* Card 2: 2-Word Copy Code to Open App */}
-          <div className="p-3.5 rounded-xl bg-black/60 border border-[#42C98B]/40 flex items-center justify-between gap-3">
+          <div className="p-3.5 rounded-xl bg-black/60 border border-emerald-500/40 flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <span className="text-[10px] uppercase tracking-wider text-[#42C98B] font-bold block">
+              <span className="text-[10px] uppercase tracking-wider text-emerald-400 font-bold block">
                 Option 2: Copy Short Code to Open App
               </span>
               <code className="text-white font-bold text-sm block mt-0.5 select-all">
@@ -417,8 +406,8 @@ export const HacktoberfestModal: React.FC<HacktoberfestModalProps> = ({
               onClick={() => handleCopyQuickCommand('run', ONE_CLICK_OPEN_CODE)}
               className={`px-3.5 py-2 rounded-lg font-bold shrink-0 flex items-center gap-1.5 transition-all cursor-pointer ${
                 copiedQuickCmd === 'run'
-                  ? 'bg-[#42C98B] text-black'
-                  : 'bg-[#42C98B]/20 border border-[#42C98B]/50 hover:bg-[#42C98B]/30 text-[#42C98B]'
+                  ? 'bg-emerald-500 text-black'
+                  : 'bg-emerald-500/20 border border-emerald-500/50 hover:bg-emerald-500/30 text-emerald-300'
               }`}
             >
               {copiedQuickCmd === 'run' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
@@ -440,9 +429,7 @@ export const HacktoberfestModal: React.FC<HacktoberfestModalProps> = ({
                   onClick={() => setActiveFileKey(key)}
                   className={`px-3 py-2 rounded-lg text-left text-xs font-mono transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer ${
                     isSelected
-                      ? isHalloween
-                        ? 'bg-[#FF7518]/20 border border-[#FF7518] text-white font-bold'
-                        : 'bg-blue-600/20 border border-blue-500 text-white font-bold'
+                      ? 'bg-blue-600/20 border border-blue-500 text-white font-bold'
                       : 'bg-black/30 border border-white/5 text-white/60 hover:text-white hover:bg-white/5'
                   }`}
                 >
@@ -467,7 +454,7 @@ export const HacktoberfestModal: React.FC<HacktoberfestModalProps> = ({
                   onClick={handleCopy}
                   className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white transition-colors cursor-pointer"
                 >
-                  {copied ? <Check className="w-3 h-3 text-[#42C98B]" /> : <Copy className="w-3 h-3" />}
+                  {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
                   <span>{copied ? 'Copied' : 'Copy'}</span>
                 </button>
                 <button
@@ -482,7 +469,7 @@ export const HacktoberfestModal: React.FC<HacktoberfestModalProps> = ({
 
             {/* Code Content */}
             <div className="flex-1 p-4 overflow-y-auto">
-              <pre className="font-mono text-[11px] text-white/85 leading-relaxed selection:bg-[#FF7518]/30">
+              <pre className="font-mono text-[11px] text-white/85 leading-relaxed selection:bg-blue-500/30">
                 <code>{currentFile.code}</code>
               </pre>
             </div>
@@ -492,12 +479,12 @@ export const HacktoberfestModal: React.FC<HacktoberfestModalProps> = ({
         {/* Bottom Tip Banner */}
         <div className="shrink-0 p-3 rounded-lg bg-black/40 border border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs font-mono text-white/70">
           <div className="flex items-center gap-2">
-            <Play className="w-3.5 h-3.5 text-[#42C98B]" />
+            <Play className="w-3.5 h-3.5 text-emerald-400" />
             <span>Zero-Config: Click the link above to open immediately, or double-click <code>start-marketmind.bat</code>!</span>
           </div>
           <button
             onClick={() => setActiveFileKey('start-marketmind.bat')}
-            className="text-xs text-[#FF7518] hover:underline cursor-pointer"
+            className="text-xs text-blue-400 hover:underline cursor-pointer"
           >
             View 1-Click Launcher →
           </button>

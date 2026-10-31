@@ -1,8 +1,7 @@
 /**
  * @license
  * SPDX-License-Identifier: MIT
- * MarketMind AI — Section D: Market Risk Analysis
- * Underwater drawdown chart, multi-asset correlation matrix, portfolio stress testing, and risk disclosures.
+ * MarketMind AI — Section D: Market Risk Analysis & Stress Testing
  */
 
 import React, { useState, useMemo } from 'react';
@@ -10,12 +9,8 @@ import { AssetMetrics, MarketDataPoint, StressScenario } from '../types/market';
 import { computeCorrelationMatrix } from '../utils/analytics';
 import {
   ShieldAlert,
-  AlertTriangle,
   Flame,
-  PieChart,
   Grid,
-  ChevronRight,
-  TrendingDown,
   Info,
 } from 'lucide-react';
 
@@ -23,7 +18,6 @@ interface RiskAnalysisSectionProps {
   activeMetric: AssetMetrics;
   peerMetrics: AssetMetrics[];
   allDatasets: Record<string, MarketDataPoint[]>;
-  isHalloween: boolean;
 }
 
 const STRESS_SCENARIOS: StressScenario[] = [
@@ -63,15 +57,18 @@ const STRESS_SCENARIOS: StressScenario[] = [
 
 export const RiskAnalysisSection: React.FC<RiskAnalysisSectionProps> = ({
   activeMetric,
-  peerMetrics,
   allDatasets,
-  isHalloween,
 }) => {
   const [selectedScenario, setSelectedScenario] = useState<StressScenario>(STRESS_SCENARIOS[0]);
 
-  // Compute correlation matrix
+  // Compute correlation matrix across up to 8 tickers for clean display
   const correlation = useMemo(() => {
-    return computeCorrelationMatrix(allDatasets);
+    const keys = Object.keys(allDatasets).slice(0, 8);
+    const subset: Record<string, MarketDataPoint[]> = {};
+    keys.forEach((k) => {
+      subset[k] = allDatasets[k];
+    });
+    return computeCorrelationMatrix(subset);
   }, [allDatasets]);
 
   // Compute continuous drawdown series (Underwater chart)
@@ -104,7 +101,6 @@ export const RiskAnalysisSection: React.FC<RiskAnalysisSectionProps> = ({
   };
 
   const getY = (val: number) => {
-    // 0 is at top (pad.top), minDrawdown is at bottom (pad.top + plotH)
     return pad.top + (val / minDrawdown) * plotH;
   };
 
@@ -113,13 +109,12 @@ export const RiskAnalysisSection: React.FC<RiskAnalysisSectionProps> = ({
     const points = drawdownSeries
       .map((d, i) => `${i === 0 ? 'M' : 'L'} ${getX(i).toFixed(1)} ${getY(d.drawdown).toFixed(1)}`)
       .join(' ');
-    // Close path to top (0% line)
     return `${points} L ${getX(drawdownSeries.length - 1)} ${pad.top} L ${pad.left} ${pad.top} Z`;
   }, [drawdownSeries, minDrawdown]);
 
   // Estimated asset stress impact based on historical beta/volatility
   const estimatedStressImpact = useMemo(() => {
-    const volRatio = activeMetric.annualizedVolatility / 18.0; // Benchmark vol ~18%
+    const volRatio = activeMetric.annualizedVolatility / 18.0;
     const estimatedLoss = selectedScenario.marketImpactPct * Math.max(0.7, volRatio);
     return Math.max(-65, Math.min(0, estimatedLoss));
   }, [activeMetric, selectedScenario]);
@@ -129,13 +124,9 @@ export const RiskAnalysisSection: React.FC<RiskAnalysisSectionProps> = ({
       {/* Section Header */}
       <div>
         <div className="flex items-center gap-2">
-          <ShieldAlert
-            className={`w-5 h-5 ${
-              isHalloween ? 'text-[#FF5468]' : 'text-red-400'
-            }`}
-          />
+          <ShieldAlert className="w-5 h-5 text-red-400" />
           <h3 className="text-xl font-display font-bold text-white tracking-tight">
-            Market Risk Analysis & Stress Testing
+            Market Risk Analysis & Stress Testing ({activeMetric.ticker})
           </h3>
         </div>
         <p className="text-xs font-mono text-white/50 mt-1">
@@ -144,7 +135,7 @@ export const RiskAnalysisSection: React.FC<RiskAnalysisSectionProps> = ({
       </div>
 
       {/* Underwater Drawdown Chart */}
-      <div className="p-6 rounded-xl bg-[#161920] border border-white/10 space-y-4">
+      <div className="p-6 rounded-xl bg-[#111827] border border-white/10 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h4 className="text-sm font-mono font-bold text-white uppercase tracking-wider">
@@ -162,7 +153,7 @@ export const RiskAnalysisSection: React.FC<RiskAnalysisSectionProps> = ({
             </div>
             <div>
               <span className="text-white/40">Trough: </span>
-              <span className="text-[#FF5468] font-bold">{activeMetric.maxDrawdownTroughDate}</span>
+              <span className="text-red-400 font-bold">{activeMetric.maxDrawdownTroughDate}</span>
             </div>
           </div>
         </div>
@@ -171,8 +162,8 @@ export const RiskAnalysisSection: React.FC<RiskAnalysisSectionProps> = ({
           <svg viewBox={`0 0 ${chartW} ${chartH}`} className="w-full h-auto overflow-visible">
             <defs>
               <linearGradient id="underwaterGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#FF5468" stopOpacity="0.05" />
-                <stop offset="100%" stopColor="#FF5468" stopOpacity="0.45" />
+                <stop offset="0%" stopColor="#EF4444" stopOpacity="0.05" />
+                <stop offset="100%" stopColor="#EF4444" stopOpacity="0.45" />
               </linearGradient>
             </defs>
 
@@ -237,7 +228,7 @@ export const RiskAnalysisSection: React.FC<RiskAnalysisSectionProps> = ({
                   )
                   .join(' ')}
                 fill="none"
-                stroke="#FF5468"
+                stroke="#EF4444"
                 strokeWidth="1.8"
                 strokeLinecap="round"
               />
@@ -274,9 +265,9 @@ export const RiskAnalysisSection: React.FC<RiskAnalysisSectionProps> = ({
       {/* Macro Stress Testing & Correlation Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Scenario Stress Testing Module */}
-        <div className="lg:col-span-6 p-6 rounded-xl bg-[#161920] border border-white/10 space-y-4">
+        <div className="lg:col-span-6 p-6 rounded-xl bg-[#111827] border border-white/10 space-y-4">
           <div className="flex items-center gap-2">
-            <Flame className="w-4 h-4 text-[#FF7518]" />
+            <Flame className="w-4 h-4 text-blue-400" />
             <h4 className="text-sm font-mono font-bold text-white uppercase tracking-wider">
               Macroeconomic Stress Testing Engine
             </h4>
@@ -289,17 +280,15 @@ export const RiskAnalysisSection: React.FC<RiskAnalysisSectionProps> = ({
                 <button
                   key={sc.id}
                   onClick={() => setSelectedScenario(sc)}
-                  className={`w-full p-3 rounded-lg border text-left transition-all font-mono text-xs ${
+                  className={`w-full p-3 rounded-lg border text-left transition-all font-mono text-xs cursor-pointer ${
                     isSelected
-                      ? isHalloween
-                        ? 'bg-[#FF7518]/20 border-[#FF7518] text-white'
-                        : 'bg-blue-600/20 border-blue-500 text-white'
+                      ? 'bg-blue-600/20 border-blue-500 text-white'
                       : 'bg-black/30 border-white/5 text-white/70 hover:bg-white/5 hover:text-white'
                   }`}
                 >
                   <div className="flex justify-between items-center font-bold">
                     <span>{sc.name}</span>
-                    <span className="text-[#FF5468]">{sc.marketImpactPct}%</span>
+                    <span className="text-red-400">{sc.marketImpactPct}%</span>
                   </div>
                   <div className="text-[11px] text-white/50 mt-1 leading-normal font-sans">
                     {sc.description}
@@ -313,7 +302,7 @@ export const RiskAnalysisSection: React.FC<RiskAnalysisSectionProps> = ({
           <div className="p-4 rounded-lg bg-black/50 border border-white/10 space-y-2 font-mono text-xs">
             <div className="flex justify-between items-center">
               <span className="text-white/60">Estimated Asset Downside ({activeMetric.ticker}):</span>
-              <span className="text-lg font-bold text-[#FF5468]">
+              <span className="text-lg font-bold text-red-400">
                 {estimatedStressImpact.toFixed(1)}%
               </span>
             </div>
@@ -331,16 +320,16 @@ export const RiskAnalysisSection: React.FC<RiskAnalysisSectionProps> = ({
         </div>
 
         {/* Cross-Asset Correlation Heatmap */}
-        <div className="lg:col-span-6 p-6 rounded-xl bg-[#161920] border border-white/10 space-y-4">
+        <div className="lg:col-span-6 p-6 rounded-xl bg-[#111827] border border-white/10 space-y-4">
           <div className="flex items-center gap-2">
-            <Grid className="w-4 h-4 text-[#9B5DE5]" />
+            <Grid className="w-4 h-4 text-violet-400" />
             <h4 className="text-sm font-mono font-bold text-white uppercase tracking-wider">
               Pairwise Return Correlation Heatmap
             </h4>
           </div>
 
           <p className="text-xs text-white/50">
-            Pearson correlation coefficient (r) calculated from concurrent daily logarithmic returns.
+            Pearson correlation coefficient (r) calculated from concurrent daily returns.
           </p>
 
           <div className="overflow-x-auto">
@@ -361,14 +350,12 @@ export const RiskAnalysisSection: React.FC<RiskAnalysisSectionProps> = ({
                     <td className="p-2 text-left font-bold text-white/80">{rowTicker}</td>
                     {correlation.matrix[i]?.map((coeff, j) => {
                       const isDiagonal = i === j;
-                      // Color scale: high positive (>0.7) -> purple/orange, low (<0.3) -> muted
-                      const intensity = Math.abs(coeff);
                       const bgStyle = isDiagonal
                         ? 'bg-white/10 text-white font-bold'
                         : coeff > 0.6
-                        ? 'bg-[#FF7518]/25 text-[#FF7518] font-semibold'
+                        ? 'bg-blue-500/25 text-blue-300 font-semibold'
                         : coeff > 0.3
-                        ? 'bg-[#9B5DE5]/20 text-[#9B5DE5]'
+                        ? 'bg-violet-500/20 text-violet-300'
                         : 'bg-black/30 text-white/50';
 
                       return (
@@ -393,10 +380,10 @@ export const RiskAnalysisSection: React.FC<RiskAnalysisSectionProps> = ({
 
       {/* Mandatory Risk & Data Limitations Callout */}
       <div className="p-4 rounded-xl bg-black/40 border border-white/10 flex items-start gap-3">
-        <Info className="w-5 h-5 text-[#FF7518] shrink-0 mt-0.5" />
+        <Info className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
         <div className="space-y-1 text-xs text-white/70 leading-relaxed font-sans">
           <strong className="text-white block font-mono">
-            MANDATORY RESEARCH LIMITATIONS & REGULATORY DISCLOSURE
+            INSTITUTIONAL RESEARCH LIMITATIONS & REGULATORY DISCLOSURE
           </strong>
           <p>
             Historical price observations and derived indicators (including Volatility, Maximum

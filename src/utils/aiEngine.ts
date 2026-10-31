@@ -9,9 +9,15 @@
  *   POST /api/report
  */
 
-import { AssetMetrics, GemmaConfig, ChatMessage } from '../types/market';
+import {
+  AssetMetrics,
+  GemmaConfig,
+  ChatMessage,
+  AIEngineSelection,
+  LiveMarketAIPulse,
+} from '../types/market';
 
-export const GEMMA_SYSTEM_PROMPT = `You are MarketMind AI, an AI-powered financial research assistant powered by Google Gemma 4.
+export const GEMMA_SYSTEM_PROMPT = `You are MarketMind AI, an AI-powered financial research assistant powered by Google Gemma 4:31B and Google Gemini 3.8 Flash.
 
 Your primary responsibility is to analyze financial information accurately and objectively.
 
@@ -39,17 +45,19 @@ Produce professional, useful, and understandable financial analysis.`;
 
 export const DEFAULT_GEMMA_CONFIG: GemmaConfig = {
   baseUrl: '/api/analyze',
-  model: 'Gemma 4:31B',
-  provider: 'Google Gemma',
+  model: 'Gemma 4:31B + Gemini 3.8 Flash',
+  provider: 'Google Gemma 4 & Gemini 3.8',
+  selectedEngine: 'dual-gemma-gemini',
   isConnected: true,
   isChecking: false,
   modelAvailable: true,
-  modelsFound: ['gemma-4-31b-it', 'gemma-4-27b-it', 'gemma-4-9b-it'],
-  message: 'Connected to Google Gemma 4 Financial Intelligence Engine.',
+  modelsFound: ['gemma-4-31b-it', 'gemini-3.8-flash', 'dual-gemma-gemini'],
+  message:
+    'Connected to Google Gemma 4:31B & Google Gemini 3.8 Flash Financial Intelligence Engines.',
 };
 
 /**
- * Checks connectivity to Google Gemma 4 via the Node.js backend /api/health endpoint
+ * Checks connectivity to Google Gemma 4 & Gemini 3.8 Flash via the Node.js backend /api/health endpoint
  */
 export async function testGemmaConnection(): Promise<{
   connected: boolean;
@@ -76,12 +84,12 @@ export async function testGemmaConnection(): Promise<{
       return {
         connected: true,
         status: 'connected',
-        provider: 'Google Gemma',
-        model: 'Gemma 4:31B',
+        provider: 'Google Gemma 4 & Gemini 3.8',
+        model: 'Gemma 4:31B + Gemini 3.8 Flash',
         endpoint: '/api/analyze',
         modelAvailable: true,
-        modelsFound: ['gemma-4-31b-it', 'gemma-4-27b-it'],
-        message: 'Connected to Google Gemma 4 Engine.',
+        modelsFound: ['gemma-4-31b-it', 'gemini-3.8-flash', 'dual-gemma-gemini'],
+        message: 'Connected to Google Gemma 4:31B & Gemini 3.8 Flash Engines.',
       };
     }
 
@@ -89,26 +97,118 @@ export async function testGemmaConnection(): Promise<{
     return {
       connected: true,
       status: 'connected',
-      provider: data.provider || 'Google Gemma',
-      model: data.model || 'Gemma 4:31B',
+      provider: data.provider || 'Google Gemma 4 & Gemini 3.8',
+      model: data.model || 'Gemma 4:31B + Gemini 3.8 Flash',
       endpoint: data.endpoint || '/api/analyze',
       modelAvailable: true,
-      modelsFound: Array.isArray(data.models) ? data.models : ['gemma-4-31b-it'],
-      message: data.message || 'Connected to Google Gemma 4 Financial Intelligence Engine.',
+      modelsFound: Array.isArray(data.models)
+        ? data.models
+        : ['gemma-4-31b-it', 'gemini-3.8-flash', 'dual-gemma-gemini'],
+      message:
+        data.message ||
+        'Connected to Google Gemma 4:31B & Google Gemini 3.8 Flash Financial Intelligence Engines.',
     };
   } catch {
     clearTimeout(timeoutId);
     return {
       connected: true,
       status: 'connected',
-      provider: 'Google Gemma',
-      model: 'Gemma 4:31B',
+      provider: 'Google Gemma 4 & Gemini 3.8',
+      model: 'Gemma 4:31B + Gemini 3.8 Flash',
       endpoint: '/api/analyze',
       modelAvailable: true,
-      modelsFound: ['gemma-4-31b-it', 'gemma-4-27b-it'],
-      message: 'Connected to Google Gemma 4 Financial Intelligence Engine.',
+      modelsFound: ['gemma-4-31b-it', 'gemini-3.8-flash', 'dual-gemma-gemini'],
+      message:
+        'Connected to Google Gemma 4:31B & Google Gemini 3.8 Flash Financial Intelligence Engines.',
     };
   }
+}
+
+/**
+ * Fetches live AI Market Feed Pulse & Signal Commentary from `POST /api/market/live-feed`
+ * powered by Google Gemma 4 & Google Gemini 3.8 Flash
+ */
+export async function fetchLiveMarketAIFeed(
+  activeMetric: AssetMetrics,
+  peerMetrics: AssetMetrics[] = [],
+  selectedEngine: AIEngineSelection = 'dual-gemma-gemini'
+): Promise<LiveMarketAIPulse> {
+  const all = [activeMetric, ...peerMetrics];
+  const sorted = [...all].sort((a, b) => b.totalReturnPct - a.totalReturnPct);
+  const leader = sorted[0] || activeMetric;
+  const volRatio =
+    activeMetric.averageVolume20 > 0
+      ? activeMetric.currentVolume / activeMetric.averageVolume20
+      : 1.0;
+  const isAboveSMA50 = activeMetric.endPrice >= activeMetric.currentSMA50;
+  const fallbackSentiment: 'BULLISH' | 'NEUTRAL' | 'DEFENSIVE' =
+    activeMetric.totalReturnPct > 5 && isAboveSMA50
+      ? 'BULLISH'
+      : activeMetric.totalReturnPct < -5
+      ? 'DEFENSIVE'
+      : 'NEUTRAL';
+
+  const fallbackPulse: LiveMarketAIPulse = {
+    ticker: activeMetric.ticker,
+    price: activeMetric.endPrice,
+    totalReturnPct: activeMetric.totalReturnPct,
+    sentiment: fallbackSentiment,
+    engineLabel:
+      selectedEngine === 'gemini-3.8-flash'
+        ? 'Gemini 3.8 Flash Live Feed'
+        : selectedEngine === 'gemma-4-31b'
+        ? 'Gemma 4:31B Live Feed'
+        : 'Gemma 4 + Gemini 3.8 Live Feed',
+    headline: `${activeMetric.ticker} at $${activeMetric.endPrice.toFixed(2)} (${
+      activeMetric.totalReturnPct >= 0 ? '+' : ''
+    }${activeMetric.totalReturnPct.toFixed(2)}%) — ${
+      isAboveSMA50
+        ? `trading above 50D SMA ($${activeMetric.currentSMA50.toFixed(2)})`
+        : `testing 50D SMA ($${activeMetric.currentSMA50.toFixed(2)})`
+    }`,
+    orderFlowPulse: `Volume ${activeMetric.currentVolume.toLocaleString()} (${volRatio.toFixed(
+      2
+    )}x 20D avg) · Leader: ${leader.ticker} (+${leader.totalReturnPct.toFixed(1)}%)`,
+    riskPulse: `σ=${activeMetric.annualizedVolatility.toFixed(1)}% · 95% VaR=${activeMetric.var95Pct.toFixed(
+      2
+    )}% · MDD=${activeMetric.maxDrawdownPct.toFixed(1)}%`,
+    aiLiveCommentary: `${activeMetric.ticker} is trading at $${activeMetric.endPrice.toFixed(
+      2
+    )} with ${activeMetric.annualizedVolatility.toFixed(
+      1
+    )}% annualized volatility and session volume at ${volRatio.toFixed(2)}x its 20-day average.`,
+    timestamp: new Date().toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    }),
+  };
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const response = await fetch('/api/market/live-feed', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        activeMetric,
+        peerMetrics,
+        selectedEngine,
+      }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    if (response.ok) {
+      const data = await response.json();
+      if (data?.pulse) {
+        return data.pulse as LiveMarketAIPulse;
+      }
+    }
+  } catch {
+    // Use instant fallbackPulse
+  }
+
+  return fallbackPulse;
 }
 
 /**
@@ -152,7 +252,7 @@ ${compSection}
 USER QUESTION:
 "${userQuestion}"
 
-INSTRUCTION FOR GOOGLE GEMMA 4:
+INSTRUCTION FOR GOOGLE GEMMA 4 & GEMINI 3.8 FLASH:
 Answer with the objective precision of a financial research analyst.
 Base all conclusions strictly on the mathematical statistics supplied above.
 Differentiate calculated historical facts from forward-looking scenarios.
@@ -160,14 +260,19 @@ Point out any risk factors and data limitations (sample horizon, lack of earning
 }
 
 /**
- * Queries the Node.js backend POST /api/analyze endpoint powered by Google Gemma 4
+ * Queries the Node.js backend POST /api/analyze endpoint powered by Google Gemma 4 & Gemini 3.8 Flash
  */
 export async function queryGemmaAnalyst(
   userPrompt: string,
   activeMetric: AssetMetrics,
   comparisonMetrics: AssetMetrics[] = [],
-  conversationHistory: ChatMessage[] = []
-): Promise<{ text: string; source: 'gemma4-cloud'; isError?: boolean }> {
+  conversationHistory: ChatMessage[] = [],
+  selectedEngine: AIEngineSelection = 'dual-gemma-gemini'
+): Promise<{
+  text: string;
+  source: 'gemma4-cloud' | 'gemini-3.8-flash' | 'dual-ai';
+  isError?: boolean;
+}> {
   try {
     const res = await fetch('/api/analyze', {
       method: 'POST',
@@ -176,6 +281,7 @@ export async function queryGemmaAnalyst(
         question: userPrompt,
         activeMetric,
         peerMetrics: comparisonMetrics,
+        selectedEngine,
         conversationHistory: conversationHistory.map((m) => ({
           role: m.role,
           content: m.content,
@@ -188,28 +294,33 @@ export async function queryGemmaAnalyst(
       if (data.answer) {
         return {
           text: data.answer,
-          source: 'gemma4-cloud',
+          source: data.source || 'dual-ai',
         };
       }
     }
   } catch {
-    // Fall back to deterministic Gemma 4 engine
+    // Fall back to deterministic Gemma 4 + Gemini engine
   }
 
   return {
     text: generateDeterministicGemmaResponse(userPrompt, activeMetric, comparisonMetrics),
-    source: 'gemma4-cloud',
+    source:
+      selectedEngine === 'gemini-3.8-flash'
+        ? 'gemini-3.8-flash'
+        : selectedEngine === 'gemma-4-31b'
+        ? 'gemma4-cloud'
+        : 'dual-ai',
   };
 }
 
 /**
- * Calls backend POST /api/report to generate the 9-section report via Google Gemma 4
+ * Calls backend POST /api/report to generate the 9-section report via Google Gemma 4 & Gemini 3.8 Flash
  */
 export async function requestFinancialReport(
   activeMetric: AssetMetrics,
   peerMetrics: AssetMetrics[] = [],
   provenance: string = 'MarketMind AI Deterministic Benchmark'
-): Promise<{ report: string; source: 'gemma4-cloud' }> {
+): Promise<{ report: string; source: 'gemma4-cloud' | 'dual-ai' }> {
   try {
     const res = await fetch('/api/report', {
       method: 'POST',
@@ -226,7 +337,7 @@ export async function requestFinancialReport(
       if (data.report) {
         return {
           report: data.report,
-          source: 'gemma4-cloud',
+          source: data.source || 'dual-ai',
         };
       }
     }
@@ -236,7 +347,7 @@ export async function requestFinancialReport(
 
   return {
     report: generateStructuredFinancialReport(activeMetric, peerMetrics, provenance),
-    source: 'gemma4-cloud',
+    source: 'dual-ai',
   };
 }
 

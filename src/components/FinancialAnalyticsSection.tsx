@@ -1,32 +1,21 @@
 /**
  * @license
  * SPDX-License-Identifier: MIT
- * MarketMind AI — Section C: Financial Analytics
- * Explicit mathematical calculations, returns distribution histogram, SMAs, and ranking matrix.
+ * MarketMind AI — Section C: Financial Analytics & Quantitative Suite
  */
 
 import React, { useMemo } from 'react';
 import { AssetMetrics } from '../types/market';
-import {
-  TrendingUp,
-  TrendingDown,
-  Activity,
-  Layers,
-  Award,
-  BarChart3,
-  Percent,
-} from 'lucide-react';
+import { Activity, Award } from 'lucide-react';
 
 interface FinancialAnalyticsSectionProps {
   activeMetric: AssetMetrics;
   peerMetrics: AssetMetrics[];
-  isHalloween: boolean;
 }
 
 export const FinancialAnalyticsSection: React.FC<FinancialAnalyticsSectionProps> = ({
   activeMetric,
   peerMetrics,
-  isHalloween,
 }) => {
   const allAssets = useMemo(() => {
     return [activeMetric, ...peerMetrics.filter((p) => p.ticker !== activeMetric.ticker)];
@@ -91,13 +80,9 @@ export const FinancialAnalyticsSection: React.FC<FinancialAnalyticsSectionProps>
       {/* Section Header */}
       <div>
         <div className="flex items-center gap-2">
-          <Activity
-            className={`w-5 h-5 ${
-              isHalloween ? 'text-[#FF7518]' : 'text-blue-400'
-            }`}
-          />
+          <Activity className="w-5 h-5 text-blue-400" />
           <h3 className="text-xl font-display font-bold text-white tracking-tight">
-            Financial Analytics & Indicator Suite
+            Quantitative Analytics & Indicator Suite ({activeMetric.ticker})
           </h3>
         </div>
         <p className="text-xs font-mono text-white/50 mt-1">
@@ -108,11 +93,11 @@ export const FinancialAnalyticsSection: React.FC<FinancialAnalyticsSectionProps>
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         {/* Total Return */}
-        <div className="p-4 rounded-xl bg-[#161920] border border-white/10 space-y-1 font-mono">
+        <div className="p-4 rounded-xl bg-[#111827] border border-white/10 space-y-1 font-mono">
           <span className="text-[10px] uppercase text-white/40 block">Total Return</span>
           <div
             className={`text-xl font-bold ${
-              activeMetric.totalReturnPct >= 0 ? 'text-[#42C98B]' : 'text-[#FF5468]'
+              activeMetric.totalReturnPct >= 0 ? 'text-emerald-400' : 'text-red-400'
             }`}
           >
             {activeMetric.totalReturnPct >= 0 ? '+' : ''}
@@ -125,7 +110,7 @@ export const FinancialAnalyticsSection: React.FC<FinancialAnalyticsSectionProps>
         </div>
 
         {/* Volatility */}
-        <div className="p-4 rounded-xl bg-[#161920] border border-white/10 space-y-1 font-mono">
+        <div className="p-4 rounded-xl bg-[#111827] border border-white/10 space-y-1 font-mono">
           <span className="text-[10px] uppercase text-white/40 block">Historical Vol (Ann.)</span>
           <div className="text-xl font-bold text-white">
             {activeMetric.annualizedVolatility.toFixed(2)}%
@@ -134,16 +119,16 @@ export const FinancialAnalyticsSection: React.FC<FinancialAnalyticsSectionProps>
         </div>
 
         {/* Max Drawdown */}
-        <div className="p-4 rounded-xl bg-[#161920] border border-white/10 space-y-1 font-mono">
+        <div className="p-4 rounded-xl bg-[#111827] border border-white/10 space-y-1 font-mono">
           <span className="text-[10px] uppercase text-white/40 block">Max Drawdown</span>
-          <div className="text-xl font-bold text-[#FF5468]">
+          <div className="text-xl font-bold text-red-400">
             {activeMetric.maxDrawdownPct.toFixed(2)}%
           </div>
           <span className="text-[10px] text-white/40">Peak-to-Trough</span>
         </div>
 
         {/* Sharpe Ratio Proxy */}
-        <div className="p-4 rounded-xl bg-[#161920] border border-white/10 space-y-1 font-mono">
+        <div className="p-4 rounded-xl bg-[#111827] border border-white/10 space-y-1 font-mono">
           <span className="text-[10px] uppercase text-white/40 block">Sharpe Proxy</span>
           <div className="text-xl font-bold text-white">
             {activeMetric.sharpeRatio.toFixed(2)}
@@ -152,7 +137,7 @@ export const FinancialAnalyticsSection: React.FC<FinancialAnalyticsSectionProps>
         </div>
 
         {/* Calmar Ratio */}
-        <div className="p-4 rounded-xl bg-[#161920] border border-white/10 space-y-1 font-mono">
+        <div className="p-4 rounded-xl bg-[#111827] border border-white/10 space-y-1 font-mono">
           <span className="text-[10px] uppercase text-white/40 block">Calmar Ratio</span>
           <div className="text-xl font-bold text-white">
             {activeMetric.calmarRatio.toFixed(2)}
@@ -161,9 +146,9 @@ export const FinancialAnalyticsSection: React.FC<FinancialAnalyticsSectionProps>
         </div>
 
         {/* 1-Day 95% VaR */}
-        <div className="p-4 rounded-xl bg-[#161920] border border-white/10 space-y-1 font-mono">
+        <div className="p-4 rounded-xl bg-[#111827] border border-white/10 space-y-1 font-mono">
           <span className="text-[10px] uppercase text-white/40 block">95% 1-Day VaR</span>
-          <div className="text-xl font-bold text-[#FF7518]">
+          <div className="text-xl font-bold text-blue-400">
             {activeMetric.var95Pct.toFixed(2)}%
           </div>
           <span className="text-[10px] text-white/40">Historical Percentile</span>
@@ -173,7 +158,7 @@ export const FinancialAnalyticsSection: React.FC<FinancialAnalyticsSectionProps>
       {/* Return Distribution Histogram & Extreme Days Split */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Histogram */}
-        <div className="lg:col-span-8 p-6 rounded-xl bg-[#161920] border border-white/10 space-y-4">
+        <div className="lg:col-span-8 p-6 rounded-xl bg-[#111827] border border-white/10 space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h4 className="text-sm font-mono font-bold text-white uppercase tracking-wider">
@@ -195,7 +180,6 @@ export const FinancialAnalyticsSection: React.FC<FinancialAnalyticsSectionProps>
               const isNegative = bucket.max <= 0;
               return (
                 <div key={idx} className="flex-1 flex flex-col items-center h-full justify-end group relative">
-                  {/* Tooltip */}
                   <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-8 px-2 py-1 rounded bg-black text-[10px] font-mono text-white whitespace-nowrap z-20 pointer-events-none border border-white/10">
                     {bucket.label}: {bucket.count} days
                   </div>
@@ -204,8 +188,8 @@ export const FinancialAnalyticsSection: React.FC<FinancialAnalyticsSectionProps>
                     style={{ height: `${Math.max(4, heightPct)}%` }}
                     className={`w-full rounded-t transition-all ${
                       isNegative
-                        ? 'bg-[#FF5468]/60 group-hover:bg-[#FF5468]'
-                        : 'bg-[#42C98B]/60 group-hover:bg-[#42C98B]'
+                        ? 'bg-red-500/60 group-hover:bg-red-500'
+                        : 'bg-emerald-500/60 group-hover:bg-emerald-500'
                     }`}
                   />
                   <span className="text-[9px] font-mono text-white/30 mt-1 truncate max-w-full">
@@ -218,7 +202,7 @@ export const FinancialAnalyticsSection: React.FC<FinancialAnalyticsSectionProps>
         </div>
 
         {/* Extreme Daily Returns Box */}
-        <div className="lg:col-span-4 p-6 rounded-xl bg-[#161920] border border-white/10 space-y-4">
+        <div className="lg:col-span-4 p-6 rounded-xl bg-[#111827] border border-white/10 space-y-4">
           <h4 className="text-sm font-mono font-bold text-white uppercase tracking-wider">
             Extreme Observed Sessions
           </h4>
@@ -227,7 +211,7 @@ export const FinancialAnalyticsSection: React.FC<FinancialAnalyticsSectionProps>
             <div className="p-3.5 rounded-lg bg-emerald-950/20 border border-emerald-500/20 space-y-1">
               <div className="flex justify-between items-center">
                 <span className="text-white/60">Single Best Session</span>
-                <span className="text-[#42C98B] font-bold text-sm">
+                <span className="text-emerald-400 font-bold text-sm">
                   +{activeMetric.bestDay.returnPct.toFixed(2)}%
                 </span>
               </div>
@@ -239,7 +223,7 @@ export const FinancialAnalyticsSection: React.FC<FinancialAnalyticsSectionProps>
             <div className="p-3.5 rounded-lg bg-red-950/20 border border-red-500/20 space-y-1">
               <div className="flex justify-between items-center">
                 <span className="text-white/60">Single Worst Session</span>
-                <span className="text-[#FF5468] font-bold text-sm">
+                <span className="text-red-400 font-bold text-sm">
                   {activeMetric.worstDay.returnPct.toFixed(2)}%
                 </span>
               </div>
@@ -276,9 +260,9 @@ export const FinancialAnalyticsSection: React.FC<FinancialAnalyticsSectionProps>
       </div>
 
       {/* Asset Performance Rankings Matrix */}
-      <div className="p-6 rounded-xl bg-[#161920] border border-white/10 space-y-4">
+      <div className="p-6 rounded-xl bg-[#111827] border border-white/10 space-y-4">
         <div className="flex items-center gap-2">
-          <Award className="w-4 h-4 text-[#FF7518]" />
+          <Award className="w-4 h-4 text-blue-400" />
           <h4 className="text-sm font-mono font-bold text-white uppercase tracking-wider">
             Asset Performance Rankings Matrix
           </h4>
@@ -290,7 +274,7 @@ export const FinancialAnalyticsSection: React.FC<FinancialAnalyticsSectionProps>
             <span className="text-[11px] text-white/40 uppercase tracking-wider block pb-1 border-b border-white/10">
               Top Cumulative Returns
             </span>
-            {rankedByReturn.map((item, idx) => (
+            {rankedByReturn.slice(0, 8).map((item, idx) => (
               <div
                 key={item.ticker}
                 className="flex items-center justify-between p-2 rounded bg-black/30 border border-white/5"
@@ -301,7 +285,7 @@ export const FinancialAnalyticsSection: React.FC<FinancialAnalyticsSectionProps>
                 </div>
                 <span
                   className={`font-semibold ${
-                    item.totalReturnPct >= 0 ? 'text-[#42C98B]' : 'text-[#FF5468]'
+                    item.totalReturnPct >= 0 ? 'text-emerald-400' : 'text-red-400'
                   }`}
                 >
                   {item.totalReturnPct >= 0 ? '+' : ''}
@@ -316,7 +300,7 @@ export const FinancialAnalyticsSection: React.FC<FinancialAnalyticsSectionProps>
             <span className="text-[11px] text-white/40 uppercase tracking-wider block pb-1 border-b border-white/10">
               Top Sharpe Proxy (Efficiency)
             </span>
-            {rankedBySharpe.map((item, idx) => (
+            {rankedBySharpe.slice(0, 8).map((item, idx) => (
               <div
                 key={item.ticker}
                 className="flex items-center justify-between p-2 rounded bg-black/30 border border-white/5"
@@ -337,7 +321,7 @@ export const FinancialAnalyticsSection: React.FC<FinancialAnalyticsSectionProps>
             <span className="text-[11px] text-white/40 uppercase tracking-wider block pb-1 border-b border-white/10">
               Lowest Annualized Volatility
             </span>
-            {rankedByVol.map((item, idx) => (
+            {rankedByVol.slice(0, 8).map((item, idx) => (
               <div
                 key={item.ticker}
                 className="flex items-center justify-between p-2 rounded bg-black/30 border border-white/5"

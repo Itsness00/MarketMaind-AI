@@ -1,7 +1,7 @@
 /**
  * @license
  * SPDX-License-Identifier: MIT
- * MarketMind AI — Types & Schemas
+ * MarketMind AI — Official Institutional Financial Terminal Types & Schemas
  */
 
 export interface MarketDataPoint {
@@ -43,6 +43,8 @@ export interface AssetMetrics {
   currentSMA20: number;
   currentSMA50: number;
   currentSMA200: number;
+  currentVolume: number;
+  averageVolume20: number;
   dailyReturns: ReturnRecord[];
 }
 
@@ -51,10 +53,13 @@ export interface CorrelationMatrix {
   matrix: number[][];
 }
 
+export type AIEngineSelection = 'gemma-4-31b' | 'gemini-3.8-flash' | 'dual-gemma-gemini';
+
 export interface GemmaConfig {
   baseUrl: string;
   model: string;
   provider: string;
+  selectedEngine?: AIEngineSelection;
   isConnected: boolean;
   isChecking: boolean;
   modelAvailable?: boolean;
@@ -64,13 +69,27 @@ export interface GemmaConfig {
   error?: string;
 }
 
+export interface LiveMarketAIPulse {
+  ticker: string;
+  price: number;
+  totalReturnPct: number;
+  sentiment: 'BULLISH' | 'NEUTRAL' | 'DEFENSIVE';
+  engineLabel: string;
+  headline: string;
+  orderFlowPulse: string;
+  riskPulse: string;
+  aiLiveCommentary: string;
+  timestamp: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: string;
   mathematicalContext?: Record<string, string | number>;
-  source?: 'gemma4-cloud' | 'error';
+  source?: 'gemma4-cloud' | 'gemini-3.8-flash' | 'dual-ai' | 'error';
+  engineUsed?: AIEngineSelection;
   isError?: boolean;
 }
 
@@ -82,3 +101,132 @@ export interface StressScenario {
   volatilityMultiplier: number;
   recoveryMonthsEstimate: number;
 }
+
+export interface PriceAlert {
+  id: string;
+  ticker: string;
+  metricType?: 'price' | 'volume';
+  condition: 'above' | 'below';
+  thresholdPrice: number;
+  initialPriceAtCreation: number;
+  createdAt: string;
+  triggered: boolean;
+  triggeredAt?: string;
+  triggeredPrice?: number;
+  note?: string;
+}
+
+export interface AlertNotification {
+  id: string;
+  alertId: string;
+  ticker: string;
+  metricType: 'price' | 'volume';
+  condition: 'above' | 'below';
+  thresholdPrice: number;
+  previousPrice: number;
+  currentPrice: number;
+  timestamp: string;
+  note?: string;
+}
+
+export type MarketSessionState = 'REGULAR' | 'PRE_MARKET' | 'AFTER_HOURS' | 'CLOSED';
+
+export interface MarketSessionStatus {
+  isOpen: boolean;
+  isExtendedHours: boolean;
+  session: MarketSessionState;
+  label: string;
+  easternTime: string;
+  exchange: string;
+  nextTransition: string;
+}
+
+export type StockExchange =
+  | 'NASDAQ'
+  | 'NYSE'
+  | 'NYSE Arca'
+  | 'LSE'
+  | 'EURONEXT'
+  | 'XETRA'
+  | 'SIX'
+  | 'TSE'
+  | 'HKEX'
+  | 'SSE'
+  | 'KRX'
+  | 'NSE'
+  | 'ASX'
+  | 'TSX'
+  | 'B3';
+
+export type MarketRegion =
+  | 'US (NYSE & NASDAQ)'
+  | 'Europe'
+  | 'Asia-Pacific'
+  | 'Americas & Global';
+
+export interface StockDirectoryItem {
+  ticker: string;
+  name: string;
+  sector: string;
+  exchange: StockExchange;
+  region?: MarketRegion;
+  country?: string;
+  currency?: string;
+  basePrice: number;
+  drift: number;
+  volatility: number;
+  description: string;
+}
+
+export interface GlobalMarketExchangeStatus {
+  id: string;
+  exchange: string;
+  name: string;
+  city: string;
+  country: string;
+  region: MarketRegion;
+  timezone: string;
+  currency: string;
+  isOpen: boolean;
+  sessionLabel: 'OPEN' | 'CLOSED' | 'LUNCH BREAK';
+  localTime: string;
+  tradingHoursLocal: string;
+}
+
+export interface PortfolioHolding {
+  ticker: string;
+  shares: number;
+  avgCostPerShare: number;
+  updatedAt?: string;
+}
+
+export interface PortfolioPositionMetrics {
+  ticker: string;
+  name: string;
+  sector: string;
+  shares: number;
+  avgCostPerShare: number;
+  currentPrice: number;
+  previousClose: number;
+  dayReturnPct: number;
+  costBasisTotal: number;
+  marketValue: number;
+  unrealizedPnL: number;
+  unrealizedPnLPct: number;
+  dayPnL: number;
+  allocationWeightPct: number;
+}
+
+export interface PortfolioSummaryMetrics {
+  totalMarketValue: number;
+  totalCostBasis: number;
+  totalUnrealizedPnL: number;
+  totalUnrealizedPnLPct: number;
+  totalDayPnL: number;
+  totalDayPnLPct: number;
+  activePositionsCount: number;
+  totalSharesCount: number;
+  positions: PortfolioPositionMetrics[];
+}
+
+

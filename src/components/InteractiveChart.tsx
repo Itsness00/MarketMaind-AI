@@ -1,24 +1,28 @@
 /**
  * @license
  * SPDX-License-Identifier: MIT
- * MarketMind AI — Interactive Financial Chart
- * High-precision SVG chart with Candlestick/Line view, SMA overlays, volume bars, and crosshair tooltip.
+ * MarketMind AI — Interactive Institutional Financial Chart
+ * High-precision SVG chart with Candlestick/Line view, SMA overlays, volume bars, price/volume alerts, and crosshair tooltip.
  */
 
 import React, { useState, useMemo, useRef } from 'react';
-import { MarketDataPoint } from '../types/market';
+import { MarketDataPoint, PriceAlert } from '../types/market';
 import { calculateSMA } from '../utils/analytics';
 
 interface InteractiveChartProps {
   data: MarketDataPoint[];
   ticker: string;
-  isHalloween: boolean;
+  priceAlerts?: PriceAlert[];
 }
 
 type ChartMode = 'candlestick' | 'line';
 type Timeframe = '1M' | '3M' | '6M' | '1Y' | 'ALL';
 
-export const InteractiveChart: React.FC<InteractiveChartProps> = ({ data, ticker, isHalloween }) => {
+export const InteractiveChart: React.FC<InteractiveChartProps> = ({
+  data,
+  ticker,
+  priceAlerts = [],
+}) => {
   const [mode, setMode] = useState<ChartMode>('candlestick');
   const [timeframe, setTimeframe] = useState<Timeframe>('1Y');
   const [showSMA20, setShowSMA20] = useState(true);
@@ -92,14 +96,30 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({ data, ticker
       if ((d.volume ?? 0) > maxVol) maxVol = d.volume ?? 0;
     });
 
-    // 4% headroom
+    // Include ticker's price alerts in Y-axis range if within reasonable bounds, and volume alerts in maxVolume
+    priceAlerts.forEach((a) => {
+      if (a.ticker !== ticker || a.thresholdPrice <= 0) return;
+      if (a.metricType === 'volume') {
+        if (a.thresholdPrice > maxVol && a.thresholdPrice <= maxVol * 2.5) {
+          maxVol = a.thresholdPrice * 1.08;
+        }
+      } else {
+        if (a.thresholdPrice < min && a.thresholdPrice >= min * 0.65) {
+          min = a.thresholdPrice;
+        }
+        if (a.thresholdPrice > max && a.thresholdPrice <= max * 1.35) {
+          max = a.thresholdPrice;
+        }
+      }
+    });
+
     const buffer = (max - min) * 0.04 || 5;
     return {
       minPrice: Math.max(0, min - buffer),
       maxPrice: max + buffer,
       maxVolume: maxVol || 1,
     };
-  }, [filteredData]);
+  }, [filteredData, priceAlerts, ticker]);
 
   // Scale functions
   const count = filteredData.length;
@@ -170,14 +190,14 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({ data, ticker
   const activeSma20 = hoverIndex !== null ? sma20Slice[hoverIndex] : sma20Slice[sma20Slice.length - 1];
   const activeSma50 = hoverIndex !== null ? sma50Slice[hoverIndex] : sma50Slice[sma50Slice.length - 1];
 
-  // Theme colors
-  const primaryAccent = isHalloween ? '#FF7518' : '#3B82F6';
-  const greenUp = isHalloween ? '#42C98B' : '#10B981';
-  const redDown = isHalloween ? '#FF5468' : '#EF4444';
-  const purpleOverlay = isHalloween ? '#9B5DE5' : '#8B5CF6';
+  // Official Institutional Terminal Colors
+  const primaryAccent = '#3B82F6';
+  const greenUp = '#10B981';
+  const redDown = '#EF4444';
+  const purpleOverlay = '#8B5CF6';
 
   return (
-    <div className="w-full bg-[#161920]/80 dark:bg-[#161920]/80 border border-white/10 rounded-xl p-5 shadow-2xl backdrop-blur-md">
+    <div className="w-full bg-[#111827]/90 border border-white/10 rounded-xl p-5 shadow-2xl backdrop-blur-md">
       {/* Chart Controls Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-white/10">
         <div className="flex items-center gap-3">
@@ -187,11 +207,9 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({ data, ticker
               <button
                 key={tf}
                 onClick={() => setTimeframe(tf)}
-                className={`px-2.5 py-1 text-xs font-mono font-medium rounded transition-all whitespace-nowrap ${
+                className={`px-2.5 py-1 text-xs font-mono font-medium rounded transition-all whitespace-nowrap cursor-pointer ${
                   timeframe === tf
-                    ? isHalloween
-                      ? 'bg-[#FF7518] text-black font-bold shadow-md'
-                      : 'bg-blue-600 text-white font-bold shadow-md'
+                    ? 'bg-blue-600 text-white font-bold shadow-md'
                     : 'text-white/60 hover:text-white hover:bg-white/5'
                 }`}
               >
@@ -206,11 +224,9 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({ data, ticker
           <div className="flex items-center p-1 bg-black/40 rounded-lg border border-white/5">
             <button
               onClick={() => setMode('candlestick')}
-              className={`px-3 py-1 text-xs font-mono rounded transition-all whitespace-nowrap ${
+              className={`px-3 py-1 text-xs font-mono rounded transition-all whitespace-nowrap cursor-pointer ${
                 mode === 'candlestick'
-                  ? isHalloween
-                    ? 'bg-[#FF7518] text-black font-semibold'
-                    : 'bg-blue-600 text-white font-semibold'
+                  ? 'bg-blue-600 text-white font-semibold'
                   : 'text-white/60 hover:text-white'
               }`}
             >
@@ -218,11 +234,9 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({ data, ticker
             </button>
             <button
               onClick={() => setMode('line')}
-              className={`px-3 py-1 text-xs font-mono rounded transition-all whitespace-nowrap ${
+              className={`px-3 py-1 text-xs font-mono rounded transition-all whitespace-nowrap cursor-pointer ${
                 mode === 'line'
-                  ? isHalloween
-                    ? 'bg-[#FF7518] text-black font-semibold'
-                    : 'bg-blue-600 text-white font-semibold'
+                  ? 'bg-blue-600 text-white font-semibold'
                   : 'text-white/60 hover:text-white'
               }`}
             >
@@ -234,11 +248,9 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({ data, ticker
           <div className="hidden sm:flex items-center gap-2 text-xs font-mono">
             <button
               onClick={() => setShowSMA20(!showSMA20)}
-              className={`px-2.5 py-1 rounded border transition-colors flex items-center gap-1.5 ${
+              className={`px-2.5 py-1 rounded border transition-colors flex items-center gap-1.5 cursor-pointer ${
                 showSMA20
-                  ? isHalloween
-                    ? 'border-[#FF7518] text-[#FF7518] bg-[#FF7518]/10'
-                    : 'border-blue-400 text-blue-400 bg-blue-500/10'
+                  ? 'border-blue-400 text-blue-400 bg-blue-500/10'
                   : 'border-white/10 text-white/40 hover:text-white/70'
               }`}
             >
@@ -247,11 +259,9 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({ data, ticker
             </button>
             <button
               onClick={() => setShowSMA50(!showSMA50)}
-              className={`px-2.5 py-1 rounded border transition-colors flex items-center gap-1.5 ${
+              className={`px-2.5 py-1 rounded border transition-colors flex items-center gap-1.5 cursor-pointer ${
                 showSMA50
-                  ? isHalloween
-                    ? 'border-[#9B5DE5] text-[#9B5DE5] bg-[#9B5DE5]/10'
-                    : 'border-purple-400 text-purple-400 bg-purple-500/10'
+                  ? 'border-violet-400 text-violet-400 bg-violet-500/10'
                   : 'border-white/10 text-white/40 hover:text-white/70'
               }`}
             >
@@ -282,23 +292,31 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({ data, ticker
           {activePoint.high !== undefined && (
             <div>
               <span className="text-white/40">HIGH: </span>
-              <span className="text-[#42C98B]">${activePoint.high.toFixed(2)}</span>
+              <span className="text-emerald-400">${activePoint.high.toFixed(2)}</span>
             </div>
           )}
           {activePoint.low !== undefined && (
             <div>
               <span className="text-white/40">LOW: </span>
-              <span className="text-[#FF5468]">${activePoint.low.toFixed(2)}</span>
+              <span className="text-red-400">${activePoint.low.toFixed(2)}</span>
+            </div>
+          )}
+          {activePoint.volume !== undefined && (
+            <div>
+              <span className="text-white/40">VOL: </span>
+              <span className="text-white/90">
+                {(activePoint.volume / 1_000_000).toFixed(2)}M
+              </span>
             </div>
           )}
           {showSMA20 && activeSma20 !== null && (
-            <div className="text-[#FF7518]">
+            <div className="text-blue-400">
               <span className="opacity-70">SMA20: </span>
               <span>${activeSma20.toFixed(2)}</span>
             </div>
           )}
           {showSMA50 && activeSma50 !== null && (
-            <div className="text-[#9B5DE5]">
+            <div className="text-violet-400">
               <span className="opacity-70">SMA50: </span>
               <span>${activeSma50.toFixed(2)}</span>
             </div>
@@ -373,7 +391,7 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({ data, ticker
           {/* Volume Bars */}
           {filteredData.map((d, i) => {
             const x = getX(i);
-            const isUp = (d.close >= (d.open ?? d.close));
+            const isUp = d.close >= (d.open ?? d.close);
             const y = getVolY(d.volume ?? 500000);
             const barH = height - padding.bottom - y;
             const barW = Math.max(1.5, (width / count) * 0.65);
@@ -393,7 +411,6 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({ data, ticker
           {/* Mode = Line */}
           {mode === 'line' && (
             <>
-              {/* Area gradient under line */}
               <path
                 d={`${linePath} L ${getX(count - 1)} ${padding.top + priceChartHeight} L ${getX(
                   0
@@ -434,7 +451,6 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({ data, ticker
 
               return (
                 <g key={`candle-${i}`}>
-                  {/* Wick */}
                   <line
                     x1={x}
                     y1={yHigh}
@@ -444,7 +460,6 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({ data, ticker
                     strokeWidth="1.2"
                     opacity="0.8"
                   />
-                  {/* Body */}
                   <rect
                     x={x - candleWidth / 2}
                     y={boxTop}
@@ -462,7 +477,7 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({ data, ticker
             <path
               d={sma20Path}
               fill="none"
-              stroke={isHalloween ? '#FF7518' : '#60A5FA'}
+              stroke="#60A5FA"
               strokeWidth="1.8"
               opacity="0.85"
             />
@@ -473,11 +488,119 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({ data, ticker
             <path
               d={sma50Path}
               fill="none"
-              stroke={isHalloween ? '#9B5DE5' : '#A78BFA'}
+              stroke="#A78BFA"
               strokeWidth="1.8"
               opacity="0.85"
             />
           )}
+
+          {/* Price Alert Threshold Horizontal Overlays */}
+          {priceAlerts
+            .filter(
+              (a) =>
+                a.ticker === ticker &&
+                (a.metricType ?? 'price') === 'price' &&
+                a.thresholdPrice >= minPrice &&
+                a.thresholdPrice <= maxPrice
+            )
+            .map((alert) => {
+              const yAlert = getY(alert.thresholdPrice);
+              const alertColor = alert.triggered
+                ? '#F59E0B'
+                : alert.condition === 'above'
+                ? greenUp
+                : redDown;
+              return (
+                <g key={alert.id}>
+                  <line
+                    x1={padding.left}
+                    y1={yAlert}
+                    x2={width - padding.right}
+                    y2={yAlert}
+                    stroke={alertColor}
+                    strokeWidth="1.5"
+                    strokeDasharray="5 4"
+                    opacity="0.9"
+                  />
+                  <rect
+                    x={padding.left + 6}
+                    y={yAlert - 10}
+                    width={145}
+                    height={16}
+                    rx="4"
+                    fill="#0B0F19"
+                    stroke={alertColor}
+                    strokeWidth="1"
+                    opacity="0.92"
+                  />
+                  <text
+                    x={padding.left + 12}
+                    y={yAlert + 1}
+                    fill={alertColor}
+                    fontSize="9"
+                    fontWeight="bold"
+                    fontFamily="var(--font-mono)"
+                  >
+                    {alert.triggered ? 'TRIGGERED' : 'ALERT'} {alert.condition === 'above' ? '≥' : '≤'} $
+                    {alert.thresholdPrice.toFixed(2)}
+                  </text>
+                </g>
+              );
+            })}
+
+          {/* Volume Alert Threshold Horizontal Overlays on Volume Subplot */}
+          {priceAlerts
+            .filter(
+              (a) =>
+                a.ticker === ticker &&
+                a.metricType === 'volume' &&
+                a.thresholdPrice > 0 &&
+                a.thresholdPrice <= maxVolume
+            )
+            .map((alert) => {
+              const yVolAlert = getVolY(alert.thresholdPrice);
+              const volColor = alert.triggered ? '#F59E0B' : '#8B5CF6';
+              const volLabel =
+                alert.thresholdPrice >= 1_000_000
+                  ? `${(alert.thresholdPrice / 1_000_000).toFixed(1)}M`
+                  : `${Math.round(alert.thresholdPrice).toLocaleString()}`;
+              return (
+                <g key={alert.id}>
+                  <line
+                    x1={padding.left}
+                    y1={yVolAlert}
+                    x2={width - padding.right}
+                    y2={yVolAlert}
+                    stroke={volColor}
+                    strokeWidth="1.5"
+                    strokeDasharray="4 3"
+                    opacity="0.95"
+                  />
+                  <rect
+                    x={width - padding.right - 150}
+                    y={yVolAlert - 9}
+                    width={144}
+                    height={15}
+                    rx="4"
+                    fill="#0B0F19"
+                    stroke={volColor}
+                    strokeWidth="1"
+                    opacity="0.92"
+                  />
+                  <text
+                    x={width - padding.right - 144}
+                    y={yVolAlert + 1}
+                    fill={volColor}
+                    fontSize="8.5"
+                    fontWeight="bold"
+                    fontFamily="var(--font-mono)"
+                  >
+                    {alert.triggered ? 'VOL SPIKE!' : 'VOL ALERT'} {alert.condition === 'above' ? '≥' : '≤'}{' '}
+                    {volLabel}
+                  </text>
+                </g>
+              );
+            })}
 
           {/* Hover crosshair vertical line */}
           {hoverIndex !== null && (
@@ -496,7 +619,7 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({ data, ticker
                 cy={getY(filteredData[hoverIndex].close)}
                 r="4.5"
                 fill={primaryAccent}
-                stroke="#090B0F"
+                stroke="#0B0F19"
                 strokeWidth="2"
               />
             </g>
@@ -525,7 +648,7 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({ data, ticker
       </div>
 
       <div className="flex items-center justify-between pt-2 text-[11px] font-mono text-white/40">
-        <span>ASSET: {ticker}</span>
+        <span>SECURITY: {ticker}</span>
         <span>HOVER OR DRAG OVER CHART FOR PRECISE OHLCV INSPECTION</span>
       </div>
     </div>
