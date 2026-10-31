@@ -27,6 +27,13 @@ import {
   getOrCreateStockInfo,
 } from './src/data/demonstrationData.ts';
 import type { MarketDataPoint } from './src/types/market.ts';
+import { requireAuth, type AuthRequest } from './src/middleware/auth.ts';
+import {
+  getOrCreateUser,
+  getUserApiSourcesByUid,
+  addUserApiSourceForUid,
+  deleteUserApiSourceForUid,
+} from './src/db/users.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -805,6 +812,90 @@ async function startServer() {
       });
     }
   });
+
+  // ==========================================
+  // AUTHENTICATED USER & CUSTOM API / OPEN-SOURCE ROUTES
+  // ==========================================
+
+  app.post('/api/user/sync', requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const uid = req.user?.uid;
+      if (!uid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      const email = req.user?.email || req.body?.email || 'analyst@marketmind.ai';
+      const fullName = req.body?.fullName || req.user?.name || 'Institutional Analyst';
+      const authProvider =
+        req.user?.firebase?.sign_in_provider || req.body?.authProvider || 'google';
+
+      const userRecord = await getOrCreateUser(uid, email, fullName, authProvider);
+      const sources = await getUserApiSourcesByUid(uid);
+
+      return res.json({
+        user: userRecord,
+        sources,
+      });
+    } catch (error: any) {
+      console.error('Failed to sync user profile:', error);
+      return res.status(500).json({ error: error.message || 'Failed to sync user profile' });
+    }
+  });
+
+  app.post('/api/user/sources', requireAuth, async (req: AuthRequest, res: Response) => {
+    try {
+      const uid = req.user?.uid;
+      if (!uid) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      const email = req.user?.email || 'analyst@marketmind.ai';
+      const {
+        id,
+        name,
+        category = 'MARKET_DATA',
+        endpointUrl,
+        protocol = 'REST_JSON',
+        description = 'Custom device API / Open-Source feed',
+        enabled = true,
+      } = req.body || {};
+
+      if (!name || !endpointUrl) {
+        return res.status(400).json({ error: 'Name and endpointUrl are required.' });
+      }
+
+      const saved = await addUserApiSourceForUid(uid, email, {
+        sourceKey: String(id || `custom-${Date.now()}`).slice(0, 128),
+        name: String(name).slice(0, 80),
+        category: String(category).slice(0, 40),
+        endpointUrl: String(endpointUrl).slice(0, 300),
+        protocol: String(protocol).slice(0, 40),
+        description: String(description).slice(0, 250),
+        enabled: Boolean(enabled),
+      });
+
+      return res.json({ source: saved });
+    } catch (error: any) {
+      console.error('Failed to save custom API source:', error);
+      return res.status(500).json({ error: error.message || 'Failed to save custom API source' });
+    }
+  });
+
+  app.delete(
+    '/api/user/sources/:sourceKey',
+    requireAuth,
+    async (req: AuthRequest, res: Response) => {
+      try {
+        const uid = req.user?.uid;
+        if (!uid) {
+          return res.status(401).json({ error: 'Unauthorized' });
+        }
+        await deleteUserApiSourceForUid(uid, String(req.params.sourceKey));
+        return res.json({ deleted: true });
+      } catch (error: any) {
+        console.error('Failed to delete custom API source:', error);
+        return res.status(500).json({ error: error.message || 'Failed to delete custom API source' });
+      }
+    }
+  );
 
   // ==========================================
   // BACKEND AI ROUTES (GOOGLE GEMMA 4 & GEMINI 3.8 FLASH)

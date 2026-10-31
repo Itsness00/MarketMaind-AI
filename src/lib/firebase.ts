@@ -2,7 +2,12 @@ import { initializeApp } from 'firebase/app';
 import {
   getAuth,
   GoogleAuthProvider,
+  GithubAuthProvider,
   signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  sendEmailVerification,
   signOut,
   onAuthStateChanged,
   User,
@@ -26,6 +31,7 @@ const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);
 export const googleAuthProvider = new GoogleAuthProvider();
+export const githubAuthProvider = new GithubAuthProvider();
 
 export enum OperationType {
   CREATE = 'create',
@@ -90,8 +96,93 @@ async function testConnection() {
 }
 testConnection();
 
-export { signInWithPopup, signOut, onAuthStateChanged };
+export {
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  sendEmailVerification,
+  signOut,
+  onAuthStateChanged,
+};
 export type { User };
+
+export async function syncUserWithBackendApi(
+  user: User,
+  fullName?: string
+): Promise<OpenSourceConnector[]> {
+  try {
+    const token = await user.getIdToken();
+    const providerId = user.providerData?.[0]?.providerId || 'google';
+    const res = await fetch('/api/user/sync', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        email: user.email,
+        fullName: fullName || user.displayName || 'Institutional Analyst',
+        authProvider: providerId,
+      }),
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (Array.isArray(data.sources)) {
+      return data.sources.map((s: any) => ({
+        id: String(s.sourceKey || s.id),
+        name: String(s.name),
+        category: (s.category || 'MARKET_DATA') as OpenSourceConnector['category'],
+        endpointUrl: String(s.endpointUrl),
+        protocol: (s.protocol || 'REST_JSON') as OpenSourceConnector['protocol'],
+        description: String(s.description || 'Custom device API / Open-Source feed'),
+        enabled: Boolean(s.enabled),
+        isCustom: true,
+        lastSyncStatus: 'VERIFIED',
+        lastSyncedAt: 'Synced',
+      }));
+    }
+    return [];
+  } catch {
+    return [];
+  }
+}
+
+export async function saveSourceToBackendApi(
+  user: User,
+  connector: OpenSourceConnector
+): Promise<void> {
+  try {
+    const token = await user.getIdToken();
+    await fetch('/api/user/sources', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(connector),
+    });
+  } catch {
+    // Non-blocking fallback
+  }
+}
+
+export async function deleteSourceFromBackendApi(
+  user: User,
+  sourceKey: string
+): Promise<void> {
+  try {
+    const token = await user.getIdToken();
+    await fetch(`/api/user/sources/${encodeURIComponent(sourceKey)}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  } catch {
+    // Non-blocking fallback
+  }
+}
 
 function sanitizeId(raw: string): string {
   const cleaned = raw.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 128);

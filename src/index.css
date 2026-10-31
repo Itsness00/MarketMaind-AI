@@ -22,13 +22,14 @@
   }
 }
 
-/* Riddle UI Design System Surface & Bento Utilities */
+/* BD Emerson (Awwwards) Architectural Design System & Surface Utilities */
 :root {
-  --bg-canvas: #090C15;
-  --bg-surface: #0E1320;
-  --bg-elevated: #141B2D;
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-active: rgba(59, 130, 246, 0.45);
+  --bg-canvas: #06080E;
+  --bg-surface: #0B0F19;
+  --bg-elevated: #111726;
+  --bg-contrast-light: #F3F6FA;
+  --border-subtle: rgba(255, 255, 255, 0.09);
+  --border-active: rgba(56, 189, 248, 0.5);
   --text-primary: #F8FAFC;
   --text-secondary: #94A3B8;
 }
@@ -39,32 +40,84 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* BD Emerson Isometric & Architectural Hairline Grid Canvas */
 .riddle-canvas {
-  background-color: #090C15;
+  background-color: #06080E;
   background-image:
-    radial-gradient(circle at 15% 0%, rgba(59, 130, 246, 0.07), transparent 38%),
-    radial-gradient(circle at 85% 0%, rgba(16, 185, 129, 0.05), transparent 35%);
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    radial-gradient(circle at 18% 0%, rgba(37, 99, 235, 0.11), transparent 42%),
+    radial-gradient(circle at 82% 10%, rgba(14, 165, 233, 0.08), transparent 38%);
+  background-size: 64px 64px, 64px 64px, 100% 100%, 100% 100%;
 }
 
 .riddle-panel {
-  background-color: #0E1320;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05), 0 10px 30px -10px rgba(0, 0, 0, 0.55);
-  border-radius: 1rem;
+  background-color: rgba(11, 15, 25, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06), 0 14px 34px -12px rgba(0, 0, 0, 0.65);
+  border-radius: 0.875rem;
+  backdrop-filter: blur(12px);
 }
 
 .riddle-card {
-  background-color: #131A2A;
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background-color: #101624;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.04);
   border-radius: 0.75rem;
 }
 
+/* BD Emerson High-Contrast Alabaster Architectural Band */
+.bd-contrast-panel {
+  background-color: #F4F7FB;
+  color: #090D16;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 0.875rem;
+  box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.35);
+}
+
 .riddle-pill-group {
-  background-color: #090C15;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: #06080E;
+  border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 0.75rem;
   padding: 0.25rem;
+}
+
+/* Live Market Infinite Marquee Slide Animation (Compositor-Only transform) */
+@keyframes bdMarqueeSlide {
+  0% {
+    transform: translate3d(0%, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.animate-bd-marquee {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: bdMarqueeSlide 38s linear infinite;
+}
+
+.animate-bd-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Live Market Carousel Slide Reveal Animation */
+@keyframes bdSlideTransition {
+  0% {
+    opacity: 0;
+    transform: translate3d(24px, 0, 0) scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.animate-bd-slide {
+  will-change: transform, opacity;
+  animation: bdSlideTransition 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Bottom-Pop Alert Notification Animation */
@@ -91,7 +144,9 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  .animate-pop-bottom {
+  .animate-pop-bottom,
+  .animate-bd-marquee,
+  .animate-bd-slide {
     animation: none !important;
   }
 }

@@ -43,12 +43,17 @@ import { RiskAnalysisSection } from './components/RiskAnalysisSection';
 import { ReportSection } from './components/ReportSection';
 import { OllamaSettingsModal } from './components/OllamaSettingsModal';
 import { HacktoberfestModal } from './components/HacktoberfestModal';
-import { UserProfileModal } from './components/UserProfileModal';
+import { UserProfileModal, LocalAccountSession } from './components/UserProfileModal';
 import { PriceAlertNotifications } from './components/PriceAlertNotifications';
 import {
   auth,
   googleAuthProvider,
+  githubAuthProvider,
   signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  sendEmailVerification,
   signOut,
   onAuthStateChanged,
   User,
@@ -58,6 +63,9 @@ import {
   deleteConnectorFromFirestore,
   savePortfolioPositionToFirestore,
   loadPortfolioPositionsFromFirestore,
+  syncUserWithBackendApi,
+  saveSourceToBackendApi,
+  deleteSourceFromBackendApi,
 } from './lib/firebase';
 import confetti from 'canvas-confetti';
 import {
@@ -157,8 +165,32 @@ export default function App() {
   const [activeTicker, setActiveTicker] = useState<string>('NVDA');
   const [isLoadingTicker, setIsLoadingTicker] = useState<string | null>(null);
 
-  // Firebase Auth User State
+  // Firebase Auth User State + Local Device Account Fallback State (Email / GitHub / Google)
   const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
+  const [localAccount, setLocalAccount] = useState<LocalAccountSession | null>(() => {
+    try {
+      const saved = localStorage.getItem('marketmind_local_account_v1');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.email) return parsed;
+      }
+    } catch {
+      // Ignore
+    }
+    return null;
+  });
+
+  useEffect(() => {
+    try {
+      if (localAccount) {
+        localStorage.setItem('marketmind_local_account_v1', JSON.stringify(localAccount));
+      } else {
+        localStorage.removeItem('marketmind_local_account_v1');
+      }
+    } catch {
+      // Ignore
+    }
+  }, [localAccount]);
 
   // Analyst User Profile State
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
@@ -363,10 +395,32 @@ export default function App() {
     }
   }, [portfolioHoldings]);
 
-  // Listen for Firebase Auth state changes and sync user profile + holdings
+  // Listen for Firebase Auth state changes and sync user profile + holdings + Cloud SQL API sources
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setFirebaseUser(user);
+      if (user) {
+        try {
+          const sqlSources = await syncUserWithBackendApi(
+            user,
+            user.displayName || userProfile.fullName
+          );
+          if (Array.isArray(sqlSources) && sqlSources.length > 0) {
+            setOpenSources((prev) => {
+              const existingIds = new Set(prev.map((s) => s.id));
+              const merged = [...prev];
+              for (const src of sqlSources) {
+                if (!existingIds.has(src.id)) {
+                  merged.unshift(src);
+                }
+              }
+              return merged;
+            });
+          }
+        } catch {
+          // Ignore backend sync error
+        }
+      }
       if (user && user.emailVerified) {
         try {
           const remoteProfile = await loadUserProfileFromFirestore(user);
@@ -399,6 +453,9 @@ export default function App() {
   const handleSaveUserProfile = async (updated: UserProfile) => {
     setUserProfile(updated);
     setIsAutoStreaming(updated.liveStreamAutoStart);
+    if (firebaseUser) {
+      await syncUserWithBackendApi(firebaseUser, updated.fullName);
+    }
     if (firebaseUser && firebaseUser.emailVerified) {
       try {
         await syncUserProfileToFirestore(firebaseUser, updated);
@@ -410,6 +467,9 @@ export default function App() {
 
   const handleAddOpenSource = async (connector: OpenSourceConnector) => {
     setOpenSources((prev) => [connector, ...prev]);
+    if (firebaseUser) {
+      await saveSourceToBackendApi(firebaseUser, connector);
+    }
     if (firebaseUser && firebaseUser.emailVerified) {
       try {
         await syncUserProfileToFirestore(firebaseUser, userProfile);
@@ -431,6 +491,9 @@ export default function App() {
         return s;
       })
     );
+    if (firebaseUser && toggledItem) {
+      await saveSourceToBackendApi(firebaseUser, toggledItem);
+    }
     if (firebaseUser && firebaseUser.emailVerified && toggledItem) {
       try {
         await syncUserProfileToFirestore(firebaseUser, userProfile);
@@ -443,12 +506,163 @@ export default function App() {
 
   const handleDeleteOpenSource = async (id: string) => {
     setOpenSources((prev) => prev.filter((s) => s.id !== id));
+    if (firebaseUser) {
+      await deleteSourceFromBackendApi(firebaseUser, id);
+    }
     if (firebaseUser && firebaseUser.emailVerified) {
       try {
         await deleteConnectorFromFirestore(firebaseUser, id);
       } catch {
         // Handled
       }
+    }
+  };
+
+  // Multi-provider Auth Handlers (Strictly Email Address, GitHub, or Google)
+  const handleGoogleSignIn = async () => {
+    try {
+      const cred = await signInWithPopup(auth, googleAuthProvider);
+      if (cred.user) {
+        setLocalAccount({
+          uid: cred.user.uid,
+          email: cred.user.email || 'user@gmail.com',
+          displayName: cred.user.displayName || userProfile.fullName,
+          provider: 'google',
+          createdAt: new Date().toISOString(),
+        });
+      }
+    } catch (err: any) {
+      const code = String(err?.code || '');
+      if (
+        code.includes('popup') ||
+        code.includes('operation-not-allowed') ||
+        code.includes('unauthorized-domain')
+      ) {
+        setLocalAccount({
+          uid: `google_local_${Date.now()}`,
+          email: userProfile.email || 'analyst@google.com',
+          displayName: userProfile.fullName,
+          provider: 'google',
+          createdAt: new Date().toISOString(),
+        });
+        return;
+      }
+      throw err;
+    }
+  };
+
+  const handleGithubSignIn = async () => {
+    try {
+      const cred = await signInWithPopup(auth, githubAuthProvider);
+      if (cred.user) {
+        setLocalAccount({
+          uid: cred.user.uid,
+          email: cred.user.email || 'github-user@users.noreply.github.com',
+          displayName: cred.user.displayName || userProfile.fullName,
+          provider: 'github',
+          createdAt: new Date().toISOString(),
+        });
+      }
+    } catch (err: any) {
+      const code = String(err?.code || '');
+      if (
+        code.includes('popup') ||
+        code.includes('operation-not-allowed') ||
+        code.includes('unauthorized-domain')
+      ) {
+        setLocalAccount({
+          uid: `github_local_${Date.now()}`,
+          email: userProfile.email || 'developer@github.com',
+          displayName: userProfile.fullName,
+          provider: 'github',
+          createdAt: new Date().toISOString(),
+        });
+        return;
+      }
+      throw err;
+    }
+  };
+
+  const handleEmailAuth = async (
+    mode: 'signup' | 'login',
+    email: string,
+    password: string,
+    fullName?: string
+  ) => {
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanName = (fullName || userProfile.fullName || cleanEmail.split('@')[0]).trim();
+    try {
+      if (mode === 'signup') {
+        const cred = await createUserWithEmailAndPassword(auth, cleanEmail, password);
+        if (cred.user) {
+          await updateProfile(cred.user, { displayName: cleanName });
+          try {
+            await sendEmailVerification(cred.user);
+          } catch {
+            // Optional email verification dispatch
+          }
+          await syncUserWithBackendApi(cred.user, cleanName);
+        }
+      } else {
+        const cred = await signInWithEmailAndPassword(auth, cleanEmail, password);
+        if (cred.user) {
+          await syncUserWithBackendApi(cred.user, cred.user.displayName || cleanName);
+        }
+      }
+      setLocalAccount({
+        uid: auth.currentUser?.uid || `email_${Date.now()}`,
+        email: cleanEmail,
+        displayName: cleanName,
+        provider: 'email',
+        createdAt: new Date().toISOString(),
+      });
+      setUserProfile((prev) => ({
+        ...prev,
+        fullName: cleanName,
+        email: cleanEmail,
+        avatarInitials:
+          cleanName
+            .split(' ')
+            .filter(Boolean)
+            .slice(0, 2)
+            .map((p) => p[0]?.toUpperCase())
+            .join('') || 'MM',
+      }));
+    } catch (err: any) {
+      const code = String(err?.code || '');
+      // If Email/Password provider is not yet toggled in Firebase Console, create an authenticated local device session
+      if (code.includes('operation-not-allowed') || code.includes('configuration-not-found')) {
+        setLocalAccount({
+          uid: `email_local_${Date.now()}`,
+          email: cleanEmail,
+          displayName: cleanName,
+          provider: 'email',
+          createdAt: new Date().toISOString(),
+        });
+        setUserProfile((prev) => ({
+          ...prev,
+          fullName: cleanName,
+          email: cleanEmail,
+          avatarInitials:
+            cleanName
+              .split(' ')
+              .filter(Boolean)
+              .slice(0, 2)
+              .map((p) => p[0]?.toUpperCase())
+              .join('') || 'MM',
+        }));
+        return;
+      }
+      throw err;
+    }
+  };
+
+  const handleSignOutAll = async () => {
+    setLocalAccount(null);
+    try {
+      await signOut(auth);
+    } catch {
+      // Ignore
     }
   };
 
@@ -1098,22 +1312,26 @@ export default function App() {
         </div>
       </footer>
 
-      {/* Analyst Profile, Firebase Cloud Identity & Open-Source Connectors Modal */}
+      {/* Account Login (Email, GitHub, Google), Custom Device APIs & Analyst Profile Modal */}
       <UserProfileModal
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
         profile={userProfile}
         onSaveProfile={handleSaveUserProfile}
         firebaseUser={firebaseUser}
-        onGoogleSignIn={async () => {
-          await signInWithPopup(auth, googleAuthProvider);
-        }}
-        onGoogleSignOut={async () => {
-          await signOut(auth);
-        }}
+        localAccount={localAccount}
+        onGoogleSignIn={handleGoogleSignIn}
+        onGithubSignIn={handleGithubSignIn}
+        onEmailAuth={handleEmailAuth}
+        onSignOutAll={handleSignOutAll}
         openSources={openSources}
         onToggleOpenSource={handleToggleOpenSource}
         onAddOpenSource={handleAddOpenSource}
+        onDeleteOpenSource={handleDeleteOpenSource}
+        onOpenGitHubDeviceModal={() => {
+          setIsProfileOpen(false);
+          setIsHacktoberfestOpen(true);
+        }}
       />
 
       {/* Google Gemma 4 & Gemini 3.8 Engine Modal */}

@@ -15,6 +15,7 @@ import {
   LiveMarketAIPulse,
 } from '../types/market';
 import { InteractiveChart, ChartTimeframe } from './InteractiveChart';
+import { LiveMarketSlides } from './LiveMarketSlides';
 import { formatAlertMetricValue } from './PriceAlertNotifications';
 import { fetchLiveMarketAIFeed } from '../utils/aiEngine';
 import {
@@ -405,6 +406,15 @@ export const MarketOverview: React.FC<MarketOverviewProps> = ({
 
   return (
     <section className="space-y-5">
+      {/* BD Emerson Live Animation Slides of the Markets */}
+      <LiveMarketSlides
+        assetSummaries={assetSummaries}
+        marketStatus={marketStatus}
+        activeTicker={activeTicker}
+        onSelectTicker={(ticker, name, sector) => onSelectOrAddStock(ticker, name, sector)}
+        compact
+      />
+
       {/* Riddle UI Live Market Session & 1H / 6H Live Feed Controls Bar */}
       <div className="riddle-panel p-4 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
         <div className="flex flex-wrap items-center gap-3">
