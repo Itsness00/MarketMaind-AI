@@ -245,15 +245,27 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           </div>
         </div>
 
-        {/* Live Animation Slides of the Markets (Interactive Carousel + Continuous Marquee Slide) */}
-        <LiveMarketSlides
-          assetSummaries={assetSummaries}
-          globalMarkets={globalMarkets}
-          marketStatus={marketStatus}
-          activeTicker={activeTicker}
-          onSelectTicker={onSelectTicker}
-          compact
-        />
+        {/* Compact World Exchanges Live Clocks Strip inside the Home View */}
+        <div className="px-5 py-3 rounded-xl bg-[#080C15]/90 border border-white/[0.08] flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-slate-400">
+          <span className="text-white font-bold uppercase tracking-wider">
+            03. WORLD EXCHANGES LIVE CLOCKS:
+          </span>
+          <div className="flex flex-wrap items-center gap-3">
+            {globalMarkets.slice(0, 8).map((ex) => (
+              <span key={ex.id} className="inline-flex items-center gap-1">
+                <span className="text-white font-semibold">{ex.exchange}</span>
+                <span className="text-slate-500 tabular-nums">({ex.localTime})</span>
+                <span
+                  className={
+                    ex.isOpen ? 'text-emerald-400 font-bold' : 'text-slate-500'
+                  }
+                >
+                  {ex.sessionLabel}
+                </span>
+              </span>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );

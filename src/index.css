@@ -103,21 +103,38 @@ body {
   animation-play-state: paused;
 }
 
-/* Live Market Carousel Slide Reveal Animation */
+/* Live Market Carousel Slide Reveal Animation (News Slide) */
 @keyframes bdSlideTransition {
   0% {
     opacity: 0;
-    transform: translate3d(24px, 0, 0) scale(0.99);
+    transform: translate3d(36px, 0, 0);
   }
   100% {
     opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
+    transform: translate3d(0, 0, 0);
   }
 }
 
 .animate-bd-slide {
   will-change: transform, opacity;
-  animation: bdSlideTransition 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: bdSlideTransition 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Live Tape (1H · 6H · 24H) Deck Slide Animation */
+@keyframes bdLiveTapeSlide {
+  0% {
+    opacity: 0;
+    transform: translate3d(-36px, 0, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-live-tape-slide {
+  will-change: transform, opacity;
+  animation: bdLiveTapeSlide 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Bottom-Pop Alert Notification Animation */
