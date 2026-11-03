@@ -905,3 +905,277 @@ export function computePortfolioMetrics(
   };
 }
 
+export type HeatmapSectorFilter =
+  | 'ALL'
+  | 'Tech'
+  | 'Healthcare'
+  | 'Energy'
+  | 'Financials'
+  | 'Consumer'
+  | 'Index & Macro';
+
+export type HeatmapColorMetric = 'priceChange' | 'volatility';
+
+export interface WatchlistHeatmapNode {
+  ticker: string;
+  name: string;
+  sector: string;
+  sectorGroup: Exclude<HeatmapSectorFilter, 'ALL'>;
+  price: number;
+  priceChangePct: number;
+  dayChangePct: number;
+  totalReturnPct: number;
+  volume: number;
+  volatilityPct: number;
+  volatilityRegime: 'LOW' | 'MODERATE' | 'HIGH';
+  weightValue: number;
+  isPositive: boolean;
+}
+
+/**
+ * Normalizes a detailed industry/sector string or ticker symbol into one of the primary
+ * institutional sector filter buckets for the D3 Market Heatmap control panel.
+ */
+export function classifyHeatmapSector(
+  rawSector: string = '',
+  ticker: string = ''
+): Exclude<HeatmapSectorFilter, 'ALL'> {
+  const s = rawSector.toLowerCase();
+  const t = ticker.trim().toUpperCase();
+
+  if (
+    s.includes('health') ||
+    s.includes('pharma') ||
+    s.includes('biotech') ||
+    s.includes('medtech') ||
+    s.includes('medical') ||
+    ['LLY', 'UNH', 'JNJ', 'ABBV', 'MRK', 'PFE', 'ISRG', 'TMO', 'NVO', 'AZN.L'].includes(t)
+  ) {
+    return 'Healthcare';
+  }
+
+  if (
+    s.includes('oil') ||
+    s.includes('gas') ||
+    s.includes('energy') ||
+    s.includes('petroleum') ||
+    ['XOM', 'CVX', 'COP', 'SLB', 'EOG', 'SHEL.L', 'BP.L', 'TTE'].includes(t)
+  ) {
+    return 'Energy';
+  }
+
+  if (
+    s.includes('bank') ||
+    s.includes('financial') ||
+    s.includes('payment') ||
+    s.includes('fintech') ||
+    s.includes('insurance') ||
+    ['JPM', 'GS', 'BAC', 'MS', 'V', 'MA', 'BRK-B', 'COIN', 'SOFI', 'AXP', 'BLK'].includes(t)
+  ) {
+    return 'Financials';
+  }
+
+  if (
+    s.includes('etf') ||
+    s.includes('index') ||
+    s.includes('benchmark') ||
+    ['SPY', 'QQQ', 'DIA', 'IWM', 'VTI', 'GLD', 'TLT'].includes(t)
+  ) {
+    return 'Index & Macro';
+  }
+
+  if (
+    s.includes('automotive') ||
+    s.includes('e-commerce') ||
+    s.includes('retail') ||
+    s.includes('consumer') ||
+    s.includes('restaurant') ||
+    s.includes('apparel') ||
+    s.includes('beverage') ||
+    s.includes('hospitality') ||
+    s.includes('media') ||
+    s.includes('streaming') ||
+    ['AMZN', 'TSLA', 'WMT', 'COST', 'HD', 'NKE', 'SBUX', 'MCD', 'KO', 'PG', 'DIS', 'NFLX'].includes(
+      t
+    )
+  ) {
+    return 'Consumer';
+  }
+
+  return 'Tech';
+}
+
+export function classifyVolatilityRegime(
+  volatilityPct: number
+): 'LOW' | 'MODERATE' | 'HIGH' {
+  if (volatilityPct < 22) return 'LOW';
+  if (volatilityPct < 36) return 'MODERATE';
+  return 'HIGH';
+}
+
+export function computeHeatmapSectorCounts(
+  assetSummaries: AssetMetrics[]
+): Record<HeatmapSectorFilter, number> {
+  const counts: Record<HeatmapSectorFilter, number> = {
+    ALL: assetSummaries.length,
+    Tech: 0,
+    Healthcare: 0,
+    Energy: 0,
+    Financials: 0,
+    Consumer: 0,
+    'Index & Macro': 0,
+  };
+
+  for (const asset of assetSummaries) {
+    const group = classifyHeatmapSector(asset.sector, asset.ticker);
+    counts[group] = (counts[group] || 0) + 1;
+  }
+
+  return counts;
+}
+
+/**
+ * Computes the top N (default 20) watchlist tickers for the D3 Market Heatmap.
+ * Supports filtering by sector (e.g., Tech, Healthcare, Energy, Financials, Consumer, Index & Macro)
+ * and coloring/sorting by either price change percentage or annualized volatility.
+ */
+export function computeTopWatchlistHeatmapData(
+  assetSummaries: AssetMetrics[],
+  mode: 'total' | 'day' = 'total',
+  maxTickers: number = 20,
+  sizingMode: 'magnitude' | 'equal' = 'magnitude',
+  options?: {
+    sectorFilter?: HeatmapSectorFilter;
+    colorMetric?: HeatmapColorMetric;
+  }
+): WatchlistHeatmapNode[] {
+  if (!assetSummaries || assetSummaries.length === 0) {
+    return [];
+  }
+
+  const sectorFilter = options?.sectorFilter || 'ALL';
+  const colorMetric = options?.colorMetric || 'priceChange';
+
+  const mapped: WatchlistHeatmapNode[] = assetSummaries.map((asset) => {
+    const dayChangePct =
+      asset.dailyReturns && asset.dailyReturns.length > 0
+        ? Number(asset.dailyReturns[asset.dailyReturns.length - 1].returnPct.toFixed(2))
+        : 0;
+    const totalReturnPct = Number(asset.totalReturnPct.toFixed(2));
+    const priceChangePct = mode === 'day' ? dayChangePct : totalReturnPct;
+    const absChange = Math.abs(priceChangePct);
+    const volatilityPct = Number(asset.annualizedVolatility.toFixed(2));
+    const sectorGroup = classifyHeatmapSector(asset.sector, asset.ticker);
+    const volatilityRegime = classifyVolatilityRegime(volatilityPct);
+
+    // Ensure every tile has a legible positive area weight in the D3 treemap
+    const weightValue =
+      sizingMode === 'equal'
+        ? 100
+        : colorMetric === 'volatility'
+        ? Number(Math.max(20, Math.min(180, 18 + volatilityPct * 2.2)).toFixed(2))
+        : Number(Math.max(18, Math.min(180, 24 + absChange * 1.15)).toFixed(2));
+
+    return {
+      ticker: asset.ticker,
+      name: asset.name,
+      sector: asset.sector || 'Public Equity',
+      sectorGroup,
+      price: Number(asset.endPrice.toFixed(2)),
+      priceChangePct,
+      dayChangePct,
+      totalReturnPct,
+      volume: asset.currentVolume || 0,
+      volatilityPct,
+      volatilityRegime,
+      weightValue,
+      isPositive: priceChangePct >= 0,
+    };
+  });
+
+  const filtered =
+    sectorFilter === 'ALL'
+      ? mapped
+      : mapped.filter((node) => node.sectorGroup === sectorFilter);
+
+  // Sort by active coloring metric magnitude descending, then slice top N
+  return filtered
+    .sort((a, b) =>
+      colorMetric === 'volatility'
+        ? b.volatilityPct - a.volatilityPct
+        : Math.abs(b.priceChangePct) - Math.abs(a.priceChangePct)
+    )
+    .slice(0, maxTickers);
+}
+
+/**
+ * Computes the fill and stroke opacity for a D3 heatmap rectangle so hovered tiles
+ * smoothly increase to full opacity (1.0) while unhovered tiles sit at a lower resting opacity.
+ */
+export function computeHeatmapTileOpacity(
+  ticker: string,
+  hoveredTicker: string | null,
+  activeTicker: string
+): {
+  fillOpacity: number;
+  strokeOpacity: number;
+  highlightOverlayOpacity: number;
+} {
+  const isHovered = hoveredTicker !== null && hoveredTicker === ticker;
+  const isSelected = activeTicker === ticker;
+
+  if (isHovered) {
+    return {
+      fillOpacity: 1.0,
+      strokeOpacity: 1.0,
+      highlightOverlayOpacity: 0.14,
+    };
+  }
+
+  if (hoveredTicker !== null) {
+    // Another tile is hovered — slightly dim non-hovered tiles to accentuate the hovered rectangle
+    return {
+      fillOpacity: isSelected ? 0.86 : 0.72,
+      strokeOpacity: isSelected ? 0.9 : 0.35,
+      highlightOverlayOpacity: 0,
+    };
+  }
+
+  return {
+    fillOpacity: isSelected ? 0.94 : 0.82,
+    strokeOpacity: isSelected ? 1.0 : 0.45,
+    highlightOverlayOpacity: 0,
+  };
+}
+
+/**
+ * Computes clamped (left, top) coordinates for the floating D3 heatmap tooltip
+ * so it tracks the cursor without clipping outside the treemap container bounds.
+ */
+export function computeHeatmapTooltipPosition(
+  mouseX: number,
+  mouseY: number,
+  containerWidth: number,
+  containerHeight: number,
+  tooltipWidth: number = 276,
+  tooltipHeight: number = 196
+): { left: number; top: number } {
+  const offset = 14;
+  const pad = 8;
+
+  let left = mouseX + offset;
+  if (left + tooltipWidth + pad > containerWidth) {
+    left = Math.max(pad, mouseX - tooltipWidth - offset);
+  }
+
+  let top = mouseY + offset;
+  if (top + tooltipHeight + pad > containerHeight) {
+    top = Math.max(pad, mouseY - tooltipHeight - offset);
+  }
+
+  return {
+    left: Math.round(Math.max(pad, Math.min(left, Math.max(pad, containerWidth - tooltipWidth - pad)))),
+    top: Math.round(Math.max(pad, Math.min(top, Math.max(pad, containerHeight - tooltipHeight - pad)))),
+  };
+}
+

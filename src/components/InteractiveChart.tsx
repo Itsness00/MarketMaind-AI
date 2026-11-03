@@ -280,23 +280,23 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({
     return first > 0 ? ((last - first) / first) * 100 : 0;
   }, [filteredData]);
 
-  // Official Institutional Terminal Colors
+  // Flores Industries Terminal Colors (Strictly Blue, Black, Red & White)
   const primaryAccent = '#3B82F6';
-  const greenUp = '#10B981';
+  const greenUp = '#3B82F6';
   const redDown = '#EF4444';
-  const purpleOverlay = '#8B5CF6';
+  const purpleOverlay = '#FFFFFF';
 
   return (
     <div className="w-full riddle-panel p-5 backdrop-blur-md">
       {/* Chart Controls Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-white/[0.08]">
+      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-white/15">
         <div className="flex flex-wrap items-center gap-3">
-          <span className="text-xs uppercase tracking-wider text-slate-400 font-mono">
+          <span className="text-xs uppercase tracking-wider text-white/75 font-mono">
             Live & Historical Timeframe
           </span>
           <div
             data-testid="chart-timeframe-selector"
-            className="flex items-center gap-1 p-1 bg-[#090C15] rounded-xl border border-white/[0.08]"
+            className="flex items-center gap-1 p-1 bg-black rounded-xl border border-white/15"
           >
             {(['1H', '6H', '1M', '3M', '6M', '1Y', 'ALL'] as ChartTimeframe[]).map((tf) => {
               const isIntraday = tf === '1H' || tf === '6H';
@@ -308,10 +308,10 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({
                   onClick={() => handleSelectTimeframe(tf)}
                   className={`px-3 py-1.5 text-xs font-mono font-medium rounded-lg transition-all whitespace-nowrap cursor-pointer ${
                     isSelected
-                      ? 'bg-blue-600 text-white font-bold shadow-[0_2px_10px_rgba(37,99,235,0.4)]'
+                      ? 'bg-blue-600 text-white font-bold shadow-[0_2px_10px_rgba(37,99,235,0.45)]'
                       : isIntraday
-                      ? 'text-emerald-300 hover:text-white hover:bg-emerald-500/15'
-                      : 'text-slate-400 hover:text-white hover:bg-white/5'
+                      ? 'text-red-400 hover:text-white hover:bg-red-600/20'
+                      : 'text-white/70 hover:text-white hover:bg-white/10'
                   }`}
                 >
                   {tf}
@@ -322,8 +322,8 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({
           <span
             className={`text-xs font-mono font-bold px-2.5 py-1 rounded-lg border ${
               timeframeDeltaPct >= 0
-                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                : 'bg-rose-500/10 border-rose-500/30 text-rose-400'
+                ? 'bg-blue-600/20 border-blue-500/40 text-blue-400'
+                : 'bg-red-600/20 border-red-500/40 text-red-400'
             }`}
           >
             {timeframe} Δ: {timeframeDeltaPct >= 0 ? '+' : ''}
@@ -333,14 +333,14 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({
 
         <div className="flex items-center gap-3">
           {/* Mode Switch: Candle vs Line */}
-          <div className="flex items-center gap-1 p-1 bg-[#090C15] rounded-xl border border-white/[0.08]">
+          <div className="flex items-center gap-1 p-1 bg-black rounded-xl border border-white/15">
             <button
               type="button"
               onClick={() => setMode('candlestick')}
               className={`px-3 py-1.5 text-xs font-mono rounded-lg transition-all whitespace-nowrap cursor-pointer ${
                 mode === 'candlestick'
                   ? 'bg-blue-600 text-white font-semibold'
-                  : 'text-slate-400 hover:text-white'
+                  : 'text-white/70 hover:text-white'
               }`}
             >
               Candlestick
@@ -351,7 +351,7 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({
               className={`px-3 py-1.5 text-xs font-mono rounded-lg transition-all whitespace-nowrap cursor-pointer ${
                 mode === 'line'
                   ? 'bg-blue-600 text-white font-semibold'
-                  : 'text-slate-400 hover:text-white'
+                  : 'text-white/70 hover:text-white'
               }`}
             >
               Line
@@ -364,8 +364,8 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({
               onClick={() => setShowSMA20(!showSMA20)}
               className={`px-2.5 py-1 rounded border transition-colors flex items-center gap-1.5 cursor-pointer ${
                 showSMA20
-                  ? 'border-blue-400 text-blue-400 bg-blue-500/10'
-                  : 'border-white/10 text-white/40 hover:text-white/70'
+                  ? 'border-blue-400 text-blue-400 bg-blue-600/15'
+                  : 'border-white/15 text-white/50 hover:text-white'
               }`}
             >
               <span className="w-2 h-0.5 bg-current inline-block" />
@@ -375,8 +375,8 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({
               onClick={() => setShowSMA50(!showSMA50)}
               className={`px-2.5 py-1 rounded border transition-colors flex items-center gap-1.5 cursor-pointer ${
                 showSMA50
-                  ? 'border-violet-400 text-violet-400 bg-violet-500/10'
-                  : 'border-white/10 text-white/40 hover:text-white/70'
+                  ? 'border-white text-white bg-white/15'
+                  : 'border-white/15 text-white/50 hover:text-white'
               }`}
             >
               <span className="w-2 h-0.5 bg-current inline-block" />
@@ -388,37 +388,37 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({
 
       {/* Crosshair / Inspector HUD */}
       {activePoint && (
-        <div className="flex flex-wrap items-center gap-4 py-3 text-xs font-mono text-white/70 border-b border-white/5">
+        <div className="flex flex-wrap items-center gap-4 py-3 text-xs font-mono text-white/80 border-b border-white/10">
           <div>
-            <span className="text-white/40">DATE: </span>
+            <span className="text-white/50">DATE: </span>
             <span className="text-white font-medium">{activePoint.date}</span>
           </div>
           <div>
-            <span className="text-white/40">CLOSE: </span>
+            <span className="text-white/50">CLOSE: </span>
             <span className="text-white font-semibold">${activePoint.close.toFixed(2)}</span>
           </div>
           {activePoint.open !== undefined && (
             <div>
-              <span className="text-white/40">OPEN: </span>
+              <span className="text-white/50">OPEN: </span>
               <span>${activePoint.open.toFixed(2)}</span>
             </div>
           )}
           {activePoint.high !== undefined && (
             <div>
-              <span className="text-white/40">HIGH: </span>
-              <span className="text-emerald-400">${activePoint.high.toFixed(2)}</span>
+              <span className="text-white/50">HIGH: </span>
+              <span className="text-blue-400">${activePoint.high.toFixed(2)}</span>
             </div>
           )}
           {activePoint.low !== undefined && (
             <div>
-              <span className="text-white/40">LOW: </span>
+              <span className="text-white/50">LOW: </span>
               <span className="text-red-400">${activePoint.low.toFixed(2)}</span>
             </div>
           )}
           {activePoint.volume !== undefined && (
             <div>
-              <span className="text-white/40">VOL: </span>
-              <span className="text-white/90">
+              <span className="text-white/50">VOL: </span>
+              <span className="text-white">
                 {(activePoint.volume / 1_000_000).toFixed(2)}M
               </span>
             </div>
@@ -430,7 +430,7 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({
             </div>
           )}
           {showSMA50 && activeSma50 !== null && (
-            <div className="text-violet-400">
+            <div className="text-white">
               <span className="opacity-70">SMA50: </span>
               <span>${activeSma50.toFixed(2)}</span>
             </div>
@@ -448,7 +448,7 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({
         >
           <defs>
             <linearGradient id="areaGlow" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={primaryAccent} stopOpacity="0.32" />
+              <stop offset="0%" stopColor={primaryAccent} stopOpacity="0.35" />
               <stop offset="100%" stopColor={primaryAccent} stopOpacity="0.0" />
             </linearGradient>
             <linearGradient id="purpleGlow" x1="0" y1="0" x2="0" y2="1">
@@ -468,13 +468,13 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({
                   y1={y}
                   x2={width - padding.right}
                   y2={y}
-                  stroke="rgba(255,255,255,0.06)"
+                  stroke="rgba(255,255,255,0.08)"
                   strokeDasharray="3 3"
                 />
                 <text
                   x={width - padding.right + 8}
                   y={y + 4}
-                  fill="rgba(255,255,255,0.4)"
+                  fill="rgba(255,255,255,0.65)"
                   fontSize="10"
                   fontFamily="var(--font-mono)"
                 >
@@ -490,12 +490,12 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({
             y1={height - padding.bottom - volumeHeight}
             x2={width - padding.right}
             y2={height - padding.bottom - volumeHeight}
-            stroke="rgba(255,255,255,0.1)"
+            stroke="rgba(255,255,255,0.15)"
           />
           <text
             x={padding.left}
             y={height - padding.bottom - volumeHeight - 4}
-            fill="rgba(255,255,255,0.3)"
+            fill="rgba(255,255,255,0.55)"
             fontSize="9"
             fontFamily="var(--font-mono)"
           >
@@ -517,7 +517,7 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({
                 width={barW}
                 height={barH}
                 fill={isUp ? greenUp : redDown}
-                opacity="0.3"
+                opacity="0.38"
               />
             );
           })}
@@ -572,7 +572,7 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({
                     y2={yLow}
                     stroke={color}
                     strokeWidth="1.2"
-                    opacity="0.8"
+                    opacity="0.85"
                   />
                   <rect
                     x={x - candleWidth / 2}
@@ -586,23 +586,23 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({
               );
             })}
 
-          {/* SMA 20 Overlay */}
+          {/* SMA 20 Overlay (Royal Blue) */}
           {showSMA20 && sma20Path && (
             <path
               d={sma20Path}
               fill="none"
               stroke="#60A5FA"
               strokeWidth="1.8"
-              opacity="0.85"
+              opacity="0.9"
             />
           )}
 
-          {/* SMA 50 Overlay */}
+          {/* SMA 50 Overlay (Pure White) */}
           {showSMA50 && sma50Path && (
             <path
               d={sma50Path}
               fill="none"
-              stroke="#A78BFA"
+              stroke="#FFFFFF"
               strokeWidth="1.8"
               opacity="0.85"
             />
@@ -620,10 +620,10 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({
             .map((alert) => {
               const yAlert = getY(alert.thresholdPrice);
               const alertColor = alert.triggered
-                ? '#F59E0B'
+                ? '#EF4444'
                 : alert.condition === 'above'
-                ? greenUp
-                : redDown;
+                ? '#3B82F6'
+                : '#EF4444';
               return (
                 <g key={alert.id}>
                   <line
@@ -634,7 +634,7 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({
                     stroke={alertColor}
                     strokeWidth="1.5"
                     strokeDasharray="5 4"
-                    opacity="0.9"
+                    opacity="0.95"
                   />
                   <rect
                     x={padding.left + 6}
@@ -642,10 +642,10 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({
                     width={145}
                     height={16}
                     rx="4"
-                    fill="#0B0F19"
+                    fill="#030407"
                     stroke={alertColor}
                     strokeWidth="1"
-                    opacity="0.92"
+                    opacity="0.95"
                   />
                   <text
                     x={padding.left + 12}
@@ -673,7 +673,7 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({
             )
             .map((alert) => {
               const yVolAlert = getVolY(alert.thresholdPrice);
-              const volColor = alert.triggered ? '#F59E0B' : '#8B5CF6';
+              const volColor = alert.triggered ? '#EF4444' : '#FFFFFF';
               const volLabel =
                 alert.thresholdPrice >= 1_000_000
                   ? `${(alert.thresholdPrice / 1_000_000).toFixed(1)}M`
@@ -696,10 +696,10 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({
                     width={144}
                     height={15}
                     rx="4"
-                    fill="#0B0F19"
+                    fill="#030407"
                     stroke={volColor}
                     strokeWidth="1"
-                    opacity="0.92"
+                    opacity="0.95"
                   />
                   <text
                     x={width - padding.right - 144}
@@ -724,7 +724,7 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({
                 y1={padding.top}
                 x2={getX(hoverIndex)}
                 y2={height - padding.bottom}
-                stroke="rgba(255,255,255,0.4)"
+                stroke="rgba(255,255,255,0.5)"
                 strokeDasharray="2 2"
                 strokeWidth="1"
               />
@@ -733,7 +733,7 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({
                 cy={getY(filteredData[hoverIndex].close)}
                 r="4.5"
                 fill={primaryAccent}
-                stroke="#0B0F19"
+                stroke="#FFFFFF"
                 strokeWidth="2"
               />
             </g>
@@ -749,7 +749,7 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({
                 key={idx}
                 x={getX(index)}
                 y={height - padding.bottom + 18}
-                fill="rgba(255,255,255,0.4)"
+                fill="rgba(255,255,255,0.65)"
                 fontSize="10"
                 fontFamily="var(--font-mono)"
                 textAnchor={idx === 0 ? 'start' : idx === 4 ? 'end' : 'middle'}
@@ -761,8 +761,8 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({
         </svg>
       </div>
 
-      <div className="flex items-center justify-between pt-2 text-[11px] font-mono text-white/40">
-        <span>SECURITY: {ticker}</span>
+      <div className="flex items-center justify-between pt-2 text-[11px] font-mono text-white/60">
+        <span>FLORES INDUSTRIES SECURITY: {ticker}</span>
         <span>HOVER OR DRAG OVER CHART FOR PRECISE OHLCV INSPECTION</span>
       </div>
     </div>

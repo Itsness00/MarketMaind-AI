@@ -69,22 +69,22 @@ export const PriceAlertNotifications: React.FC<PriceAlertNotificationsProps> = (
             role="alert"
             className={`pointer-events-auto rounded-2xl p-4 border shadow-2xl backdrop-blur-xl transition-all animate-pop-bottom ${
               isVolume
-                ? 'bg-[#141126]/95 border-violet-500/70 shadow-[0_12px_35px_rgba(139,92,246,0.35)]'
+                ? 'bg-[#05070D]/95 border-white/60 shadow-[0_12px_35px_rgba(37,99,235,0.35)]'
                 : isAbove
-                ? 'bg-[#0C1A17]/95 border-emerald-500/60 shadow-[0_12px_35px_rgba(16,185,129,0.28)]'
-                : 'bg-[#1E0E14]/95 border-red-500/60 shadow-[0_12px_35px_rgba(239,68,68,0.28)]'
+                ? 'bg-[#050A14]/95 border-blue-500/70 shadow-[0_12px_35px_rgba(37,99,235,0.32)]'
+                : 'bg-[#120608]/95 border-red-500/70 shadow-[0_12px_35px_rgba(220,38,38,0.32)]'
             }`}
           >
             {/* Header Row */}
-            <div className="flex items-start justify-between gap-2 pb-2.5 border-b border-white/10">
+            <div className="flex items-start justify-between gap-2 pb-2.5 border-b border-white/15">
               <div className="flex items-center gap-2">
                 <div
                   className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
                     isVolume
-                      ? 'bg-violet-500/25 text-violet-300 border border-violet-500/50'
+                      ? 'bg-white text-black border border-blue-500'
                       : isAbove
-                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                      : 'bg-red-500/20 text-red-400 border border-red-500/40'
+                      ? 'bg-blue-600/25 text-blue-400 border border-blue-500/50'
+                      : 'bg-red-600/25 text-red-400 border border-red-500/50'
                   }`}
                 >
                   {isVolume ? (
@@ -100,8 +100,10 @@ export const PriceAlertNotifications: React.FC<PriceAlertNotificationsProps> = (
                     <span
                       className={`font-mono text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded ${
                         isVolume
-                          ? 'bg-violet-500/25 text-violet-200'
-                          : 'bg-white/10 text-white'
+                          ? 'bg-white text-black'
+                          : isAbove
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-red-600 text-white'
                       }`}
                     >
                       {isVolume ? 'VOLUME SPIKE ALERT' : 'PRICE ALERT TRIGGERED'}
@@ -129,8 +131,8 @@ export const PriceAlertNotifications: React.FC<PriceAlertNotificationsProps> = (
 
             {/* Crossing Details */}
             <div className="py-2.5 grid grid-cols-2 gap-2 font-mono text-xs">
-              <div className="p-2 rounded-lg bg-black/40 border border-white/5">
-                <span className="text-[10px] text-white/40 block uppercase">
+              <div className="p-2 rounded-lg bg-black/60 border border-white/10">
+                <span className="text-[10px] text-white/50 block uppercase">
                   {isVolume ? 'Volume Threshold' : 'Target Threshold'}
                 </span>
                 <span className="text-white font-bold">
@@ -138,16 +140,16 @@ export const PriceAlertNotifications: React.FC<PriceAlertNotificationsProps> = (
                   {formatAlertMetricValue(notif.thresholdPrice, notif.metricType)}
                 </span>
               </div>
-              <div className="p-2 rounded-lg bg-black/40 border border-white/5">
-                <span className="text-[10px] text-white/40 block uppercase">
+              <div className="p-2 rounded-lg bg-black/60 border border-white/10">
+                <span className="text-[10px] text-white/50 block uppercase">
                   {isVolume ? 'Observed Volume' : 'Updated Market Price'}
                 </span>
                 <span
                   className={`font-bold ${
                     isVolume
-                      ? 'text-violet-300'
+                      ? 'text-white'
                       : isAbove
-                      ? 'text-emerald-400'
+                      ? 'text-blue-400'
                       : 'text-red-400'
                   }`}
                 >

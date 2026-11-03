@@ -320,9 +320,9 @@ export const RiskAnalysisSection: React.FC<RiskAnalysisSectionProps> = ({
         </div>
 
         {/* Cross-Asset Correlation Heatmap */}
-        <div className="lg:col-span-6 p-6 rounded-xl bg-[#111827] border border-white/10 space-y-4">
+        <div className="lg:col-span-6 p-6 rounded-xl bg-[#05070D] border border-white/15 space-y-4">
           <div className="flex items-center gap-2">
-            <Grid className="w-4 h-4 text-violet-400" />
+            <Grid className="w-4 h-4 text-red-400" />
             <h4 className="text-sm font-mono font-bold text-white uppercase tracking-wider">
               Pairwise Return Correlation Heatmap
             </h4>
@@ -351,12 +351,12 @@ export const RiskAnalysisSection: React.FC<RiskAnalysisSectionProps> = ({
                     {correlation.matrix[i]?.map((coeff, j) => {
                       const isDiagonal = i === j;
                       const bgStyle = isDiagonal
-                        ? 'bg-white/10 text-white font-bold'
+                        ? 'bg-white text-black font-bold'
                         : coeff > 0.6
-                        ? 'bg-blue-500/25 text-blue-300 font-semibold'
+                        ? 'bg-blue-600/30 text-blue-300 font-semibold'
                         : coeff > 0.3
-                        ? 'bg-violet-500/20 text-violet-300'
-                        : 'bg-black/30 text-white/50';
+                        ? 'bg-red-600/25 text-red-300'
+                        : 'bg-black/50 text-white/50';
 
                       return (
                         <td key={j} className={`p-2 rounded m-0.5 ${bgStyle}`}>

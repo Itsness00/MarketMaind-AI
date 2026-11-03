@@ -1018,9 +1018,36 @@ export const MARKET_STOCK_DIRECTORY: StockDirectoryItem[] = [
   },
 ];
 
-// Default initial watchlist (10 flagship stocks & benchmarks)
+// Default initial watchlist (20 flagship stocks & benchmarks spanning Tech, Healthcare, Energy, Financials, Consumer & ETFs)
 export const DEMO_ASSETS: StockDirectoryItem[] = MARKET_STOCK_DIRECTORY.filter((item) =>
-  ['NVDA', 'MSFT', 'AAPL', 'GOOGL', 'AMZN', 'META', 'TSLA', 'JPM', 'SPY', 'QQQ'].includes(item.ticker)
+  [
+    // Tech (Semiconductors, Cloud & AI)
+    'NVDA',
+    'MSFT',
+    'AAPL',
+    'GOOGL',
+    'META',
+    'AMD',
+    'AVGO',
+    'TSM',
+    'INTC',
+    'PLTR',
+    // Healthcare & Biotech
+    'LLY',
+    'UNH',
+    'JNJ',
+    // Energy (Oil & Gas)
+    'XOM',
+    'CVX',
+    // Financials
+    'JPM',
+    'GS',
+    // Consumer & EV
+    'AMZN',
+    'TSLA',
+    // Benchmark Index ETF
+    'SPY',
+  ].includes(item.ticker)
 );
 
 /**

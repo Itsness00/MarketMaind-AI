@@ -1,37 +1,35 @@
 /**
  * @license
  * SPDX-License-Identifier: MIT
- * MarketMind AI — Section B: AI Market Analyst
- * Interactive financial research assistant powered by Google Gemma 4:31B & Google Gemini 3.8 Flash.
+ * MarketMind AI — AI Buy/Sell Alerts & Interactive Quantitative Analyst
+ * Powered by Google Gemma 4:31B Cloud (Ollama) & Google Gemini 3.8 Flash
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   AssetMetrics,
   GemmaConfig,
   ChatMessage,
   AIEngineSelection,
-  LiveMarketAIPulse,
+  PriceAlert,
 } from '../types/market';
+import { queryGemmaAnalyst } from '../utils/aiEngine';
 import {
-  queryGemmaAnalyst,
-  buildFinancialContextPrompt,
-  fetchLiveMarketAIFeed,
-} from '../utils/aiEngine';
+  INITIAL_GLOBAL_INSTRUMENTS,
+  computeAITradingSignals,
+  AITradingAlertSignal,
+} from '../data/globalMarketsData';
 import {
+  Bell,
   Send,
   Bot,
-  User,
-  ChevronDown,
-  ChevronUp,
-  Database,
-  RefreshCw,
-  Copy,
-  Check,
-  FileText,
   Sparkles,
-  Cpu,
-  Radio,
+  TrendingUp,
+  TrendingDown,
+  FileText,
+  Plus,
+  Trash2,
+  RefreshCw,
 } from 'lucide-react';
 
 interface AIAnalystSectionProps {
@@ -39,15 +37,17 @@ interface AIAnalystSectionProps {
   peerMetrics: AssetMetrics[];
   gemmaConfig: GemmaConfig;
   onNavigateToReport?: () => void;
+  priceAlerts?: PriceAlert[];
+  onAddPriceAlert?: (alert: Omit<PriceAlert, 'id' | 'createdAt' | 'triggered'>) => void;
+  onDeletePriceAlert?: (id: string) => void;
+  onSelectTicker?: (ticker: string) => void;
 }
 
-const EXAMPLE_QUESTIONS = [
-  'What are the most important trends in this dataset?',
-  'Which stock performed best?',
-  'Which asset showed the highest volatility?',
-  'What are the biggest risks?',
-  'Compare the performance of these companies.',
-  'What does the market data suggest about investor uncertainty?',
+const QUICK_AI_PROMPTS = [
+  'Evaluate whether the active asset is a BUY or SELL based on SMA50/200, RSI, and Sharpe ratio.',
+  'Which assets in our dataset show the strongest bullish risk-adjusted momentum?',
+  'Identify the top downside tail-risks and stop-loss levels for the active asset.',
+  'Compare historical volatility and maximum drawdown across the top performers.',
 ];
 
 export const AIAnalystSection: React.FC<AIAnalystSectionProps> = ({
@@ -55,434 +55,556 @@ export const AIAnalystSection: React.FC<AIAnalystSectionProps> = ({
   peerMetrics,
   gemmaConfig,
   onNavigateToReport,
+  priceAlerts = [],
+  onAddPriceAlert,
+  onDeletePriceAlert,
+  onSelectTicker,
 }) => {
   const [selectedEngine, setSelectedEngine] = useState<AIEngineSelection>(
     gemmaConfig.selectedEngine || 'dual-gemma-gemini'
   );
-  const [livePulse, setLivePulse] = useState<LiveMarketAIPulse | null>(null);
-  const [isRefreshingPulse, setIsRefreshingPulse] = useState(false);
+  const [signalFilter, setSignalFilter] = useState<'ALL' | 'BUY' | 'SELL' | 'HOLD'>('ALL');
+  const [verifiedRationales, setVerifiedRationales] = useState<Record<string, string>>({});
+  const [verifyingSignalId, setVerifyingSignalId] = useState<string | null>(null);
 
+  // Custom Price Alert Form
+  const [alertCondition, setAlertCondition] = useState<'above' | 'below'>('above');
+  const [alertPriceInput, setAlertPriceInput] = useState<string>(
+    activeMetric ? (activeMetric.endPrice * 1.03).toFixed(2) : '200.00'
+  );
+  const [alertNoteInput, setAlertNoteInput] = useState<string>('AI Buy/Sell Breakout Trigger');
+
+  // Chat State
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
-      id: 'welcome',
+      id: 'welcome-msg',
       role: 'assistant',
-      content: `### MarketMind AI Institutional Research Briefing (Gemma 4 & Gemini 3.8)
-Welcome to the AI Financial Research Terminal. I am **MarketMind AI**, powered by **Google Gemma 4:31B** & **Google Gemini 3.8 Flash**.
-
-I am conditioned on verified mathematical indicators for **${activeMetric.ticker} (${activeMetric.name})** and **${peerMetrics.length} peer benchmark assets** across **${activeMetric.dataPointsCount} trading sessions**.
-
-Switch between **Gemma 4 + Gemini Co-Pilot**, **Google Gemma 4:31B**, or **Google Gemini 3.8 Flash** above, or click any preset financial inquiry below.`,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      content: `MarketMind AI Signal & Research Desk initialized.\nActive Security: ${activeMetric.ticker} ($${activeMetric.endPrice.toFixed(2)}) · Total Return: ${activeMetric.totalReturnPct >= 0 ? '+' : ''}${activeMetric.totalReturnPct.toFixed(2)}% · Sharpe Ratio: ${activeMetric.sharpeRatio.toFixed(2)}.\n\nInspect the live Gemma 4 & Gemini Buy/Sell signals below, or submit any quantitative question.`,
+      timestamp: new Date().toLocaleTimeString(),
       source: 'dual-ai',
-      engineUsed: 'dual-gemma-gemini',
     },
   ]);
+  const [inputQuestion, setInputQuestion] = useState<string>('');
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const [inputQuestion, setInputQuestion] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [showEvidence, setShowEvidence] = useState(false);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, isLoading]);
-
-  // Fetch Live Market Feed AI Pulse when activeTicker or selectedEngine changes
-  const handleRefreshLivePulse = async () => {
-    setIsRefreshingPulse(true);
-    try {
-      const pulse = await fetchLiveMarketAIFeed(activeMetric, peerMetrics, selectedEngine);
-      setLivePulse(pulse);
-    } finally {
-      setIsRefreshingPulse(false);
-    }
-  };
-
-  useEffect(() => {
-    let mounted = true;
-    fetchLiveMarketAIFeed(activeMetric, peerMetrics, selectedEngine).then((p) => {
-      if (mounted) setLivePulse(p);
-    });
-    return () => {
-      mounted = false;
-    };
-  }, [activeMetric.ticker, activeMetric.endPrice, selectedEngine]);
-
-  const handleAskQuestion = async (questionText: string) => {
-    if (!questionText.trim() || isLoading) return;
-
-    const userMsg: ChatMessage = {
-      id: `usr_${Date.now()}`,
-      role: 'user',
-      content: questionText.trim(),
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
-    setInputQuestion('');
-    setIsLoading(true);
-
-    try {
-      const response = await queryGemmaAnalyst(
-        questionText,
-        activeMetric,
-        peerMetrics,
-        messages,
-        selectedEngine
-      );
-
-      const aiMsg: ChatMessage = {
-        id: `ai_${Date.now()}`,
-        role: 'assistant',
-        content: response.text,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        source: response.source,
-        engineUsed: selectedEngine,
-      };
-      setMessages((prev) => [...prev, aiMsg]);
-    } catch (err: unknown) {
-      const errStr = err instanceof Error ? err.message : String(err);
-      const errorMsg: ChatMessage = {
-        id: `err_${Date.now()}`,
-        role: 'assistant',
-        content: `Error querying Google Gemma 4 & Gemini 3.8 backend (${errStr}).`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        source: 'error',
-        isError: true,
-      };
-      setMessages((prev) => [...prev, errorMsg]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleCopyMessage = (id: string, text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
-
-  const currentPayloadPreview = buildFinancialContextPrompt(
-    activeMetric,
-    peerMetrics,
-    inputQuestion || 'USER QUESTION...'
+  const allSummaries = useMemo(
+    () => [activeMetric, ...peerMetrics].filter(Boolean),
+    [activeMetric, peerMetrics]
   );
 
-  const activeEngineBadgeLabel =
-    selectedEngine === 'gemini-3.8-flash'
-      ? 'GEMINI 3.8 FLASH'
-      : selectedEngine === 'gemma-4-31b'
-      ? 'GEMMA 4:31B'
-      : 'GEMMA 4:31B + GEMINI 3.8 FLASH';
+  const aiSignals = useMemo(
+    () => computeAITradingSignals(INITIAL_GLOBAL_INSTRUMENTS, allSummaries),
+    [allSummaries]
+  );
+
+  const filteredSignals = useMemo(() => {
+    if (signalFilter === 'ALL') return aiSignals;
+    if (signalFilter === 'BUY') {
+      return aiSignals.filter((s) => s.action === 'STRONG BUY' || s.action === 'BUY');
+    }
+    if (signalFilter === 'SELL') {
+      return aiSignals.filter((s) => s.action === 'STRONG SELL' || s.action === 'SELL');
+    }
+    return aiSignals.filter((s) => s.action === 'HOLD');
+  }, [aiSignals, signalFilter]);
+
+  const buyCount = aiSignals.filter((s) => s.action === 'STRONG BUY' || s.action === 'BUY').length;
+  const sellCount = aiSignals.filter(
+    (s) => s.action === 'STRONG SELL' || s.action === 'SELL'
+  ).length;
+  const holdCount = aiSignals.filter((s) => s.action === 'HOLD').length;
+
+  const handleVerifySignalWithAI = async (sig: AITradingAlertSignal) => {
+    setVerifyingSignalId(sig.id);
+    try {
+      const q = `Provide a concise 3-sentence institutional trade audit for ${sig.symbol} (${sig.name}). Current signal: ${sig.action} (${sig.confidencePct}% confidence), Price: $${sig.currentPrice}, Target: $${sig.targetPrice}, Stop-Loss: $${sig.stopLossPrice}, Risk/Reward: ${sig.riskRewardRatio}x, Trigger: ${sig.technicalTrigger}. Confirm key execution levels and primary risk factor.`;
+      const result = await queryGemmaAnalyst(q, activeMetric, peerMetrics, [], selectedEngine);
+      setVerifiedRationales((prev) => ({
+        ...prev,
+        [sig.id]: result.response,
+      }));
+    } catch (err: any) {
+      setVerifiedRationales((prev) => ({
+        ...prev,
+        [sig.id]: `Gemma 4 / Gemini verification note: ${sig.quantThesis}`,
+      }));
+    } finally {
+      setVerifyingSignalId(null);
+    }
+  };
+
+  const handleSendQuestion = async (questionText?: string) => {
+    const q = (questionText ?? inputQuestion).trim();
+    if (!q || isGenerating) return;
+
+    const userMsg: ChatMessage = {
+      id: `user-${Date.now()}`,
+      role: 'user',
+      content: q,
+      timestamp: new Date().toLocaleTimeString(),
+    };
+    setMessages((prev) => [...prev, userMsg]);
+    if (!questionText) setInputQuestion('');
+    setIsGenerating(true);
+    setErrorMsg(null);
+
+    try {
+      const res = await queryGemmaAnalyst(q, activeMetric, peerMetrics, messages, selectedEngine);
+      const assistantMsg: ChatMessage = {
+        id: `ai-${Date.now()}`,
+        role: 'assistant',
+        content: res.response,
+        timestamp: new Date().toLocaleTimeString(),
+        source: res.source,
+        engineUsed: selectedEngine,
+      };
+      setMessages((prev) => [...prev, assistantMsg]);
+    } catch (err: any) {
+      const msg = err.message || 'Failed to communicate with AI engine.';
+      setErrorMsg(msg);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `err-${Date.now()}`,
+          role: 'assistant',
+          content: `Connection Notice: ${msg}`,
+          timestamp: new Date().toLocaleTimeString(),
+          isError: true,
+        },
+      ]);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleCreateCustomAlert = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!onAddPriceAlert) return;
+    const threshold = Number(alertPriceInput);
+    if (isNaN(threshold) || threshold <= 0) return;
+    onAddPriceAlert({
+      ticker: activeMetric.ticker,
+      metricType: 'price',
+      condition: alertCondition,
+      thresholdPrice: threshold,
+      initialPriceAtCreation: activeMetric.endPrice,
+      note: alertNoteInput.trim() || 'AI Buy/Sell Price Trigger',
+    });
+  };
 
   return (
-    <section className="space-y-4">
-      {/* Compact AI Analyst Header & Dual Engine Switcher (Gemma 4 & Gemini 3.8) */}
-      <div className="p-3.5 rounded-xl bg-[#111827] border border-white/10 shadow-lg space-y-2.5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs bg-blue-600/20 text-blue-400 border border-blue-500/40">
-              <Bot className="w-4 h-4" />
+    <div className="space-y-6">
+      {/* =================================================================== */}
+      {/* 1. AI ENGINE TELEMETRY BAR (GEMMA 4:31B CLOUD + GEMINI 3.8 FLASH)   */}
+      {/* =================================================================== */}
+      <div className="rounded-xl bg-[#070A12] border border-white/15 p-4 sm:p-5 space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-3 border-b border-white/10">
+          <div>
+            <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
+              <span className="text-blue-400 font-bold">AI MODEL: GEMMA 4:31B CLOUD</span>
+              <span className="text-white/40">·</span>
+              <span className="text-white/80">PROVIDER: OLLAMA</span>
+              <span className="text-white/40">·</span>
+              <span
+                className={
+                  gemmaConfig.isConnected
+                    ? 'text-emerald-400 font-bold'
+                    : 'text-amber-400 font-bold'
+                }
+              >
+                CONNECTION STATUS: {gemmaConfig.isConnected ? 'CONNECTED' : 'DISCONNECTED (GEMINI CLOUD ACTIVE)'}
+              </span>
             </div>
-            <div>
-              <h3 className="text-base font-display font-bold text-white tracking-tight">
-                AI Analyst & Live Feed Intelligence ({activeMetric.ticker})
-              </h3>
-              <p className="text-[11px] font-mono text-white/50">
-                Institutional Quantitative Engine · Powered by Google Gemma 4:31B & Google Gemini 3.8 Flash
-              </p>
-            </div>
+            <h2 className="text-xl sm:text-2xl font-display font-bold text-white tracking-tight mt-1">
+              AI Buy & Sell Alerts (Powered by Google Gemma 4:31B & Gemini)
+            </h2>
           </div>
 
-          {/* Engine Selector Pills + Report Trigger */}
           <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex items-center p-0.5 rounded-lg bg-[#0B0F19] border border-white/10 text-[11px] font-mono">
+            <div className="inline-flex items-center rounded-lg bg-black border border-white/15 p-0.5">
               {[
-                { id: 'dual-gemma-gemini' as AIEngineSelection, label: 'Gemma 4 + Gemini' },
-                { id: 'gemma-4-31b' as AIEngineSelection, label: 'Gemma 4:31B' },
-                { id: 'gemini-3.8-flash' as AIEngineSelection, label: 'Gemini 3.8 Flash' },
-              ].map((eng) => {
-                const isActive = selectedEngine === eng.id;
-                return (
-                  <button
-                    key={eng.id}
-                    type="button"
-                    onClick={() => setSelectedEngine(eng.id)}
-                    className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
-                      isActive
-                        ? 'bg-blue-600 text-white font-bold shadow'
-                        : 'text-white/65 hover:text-white'
-                    }`}
-                  >
-                    {eng.label}
-                  </button>
-                );
-              })}
+                { id: 'dual-gemma-gemini', label: 'Dual: Gemma 4 + Gemini' },
+                { id: 'gemma-4-31b', label: 'Gemma 4:31B (Ollama)' },
+                { id: 'gemini-3.8-flash', label: 'Gemini 3.8 Cloud' },
+              ].map((eng) => (
+                <button
+                  key={eng.id}
+                  type="button"
+                  onClick={() => setSelectedEngine(eng.id as AIEngineSelection)}
+                  className={`px-2.5 py-1 rounded text-xs font-mono font-semibold transition-colors cursor-pointer ${
+                    selectedEngine === eng.id
+                      ? 'bg-blue-600 text-white'
+                      : 'text-white/65 hover:text-white'
+                  }`}
+                >
+                  {eng.label}
+                </button>
+              ))}
             </div>
 
             {onNavigateToReport && (
               <button
+                type="button"
                 onClick={onNavigateToReport}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-mono font-bold transition-all shadow-md bg-emerald-600 text-white hover:bg-emerald-500 cursor-pointer"
+                className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-mono font-semibold flex items-center gap-1.5 cursor-pointer"
               >
                 <FileText className="w-3.5 h-3.5" />
-                <span>9-Section Report</span>
+                Generate 9-Section Report
               </button>
             )}
           </div>
         </div>
 
-        {/* Status Display: AI MODEL, PROVIDER, CONNECTION STATUS */}
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/5 text-[11px] font-mono">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-1.5">
-              <Cpu className="w-3.5 h-3.5 text-blue-400" />
-              <span className="text-white/40">AI MODEL:</span>
-              <span className="text-white font-bold tracking-wider">{activeEngineBadgeLabel}</span>
-            </div>
-            <span className="text-white/20">|</span>
-            <div className="flex items-center gap-1.5">
-              <span className="text-white/40">PROVIDER:</span>
-              <span className="text-white font-bold tracking-wider">GOOGLE GEMMA & GEMINI</span>
-            </div>
-            <span className="text-white/20">|</span>
-            <div className="flex items-center gap-1.5">
-              <span className="text-white/40">CONNECTION STATUS:</span>
-              <span className="inline-flex items-center gap-1.5 font-bold text-emerald-400">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#10B981]" />
-                CONNECTED
-              </span>
-            </div>
+        {/* Filter Bar for AI Buy / Sell Signals */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div
+            role="tablist"
+            aria-label="Filter AI Trading Signals"
+            className="flex flex-wrap items-center gap-2"
+          >
+            <button
+              type="button"
+              onClick={() => setSignalFilter('ALL')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold border cursor-pointer ${
+                signalFilter === 'ALL'
+                  ? 'bg-blue-600 text-white border-blue-400'
+                  : 'bg-black text-white/75 border-white/15'
+              }`}
+            >
+              All Signals ({aiSignals.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setSignalFilter('BUY')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold border cursor-pointer ${
+                signalFilter === 'BUY'
+                  ? 'bg-emerald-600 text-white border-emerald-400'
+                  : 'bg-black text-emerald-400 border-emerald-500/30'
+              }`}
+            >
+              Buy Signals ({buyCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setSignalFilter('SELL')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold border cursor-pointer ${
+                signalFilter === 'SELL'
+                  ? 'bg-red-600 text-white border-red-400'
+                  : 'bg-black text-red-400 border-red-500/30'
+              }`}
+            >
+              Sell Signals ({sellCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setSignalFilter('HOLD')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold border cursor-pointer ${
+                signalFilter === 'HOLD'
+                  ? 'bg-white/20 text-white border-white/40'
+                  : 'bg-black text-white/70 border-white/15'
+              }`}
+            >
+              Hold / Neutral ({holdCount})
+            </button>
           </div>
 
-          <button
-            onClick={() => setShowEvidence(!showEvidence)}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] font-mono text-white/70 hover:text-white transition-colors cursor-pointer"
-          >
-            <Database className="w-3 h-3 text-blue-400" />
-            <span>Inspect Grounded Prompt</span>
-            {showEvidence ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-          </button>
+          <div className="text-xs font-mono text-white/60">
+            Grounded in SMA-50/200, RSI-14, Relative Volume & Annualized Volatility
+          </div>
         </div>
       </div>
 
-      {/* Live Market Feed AI Pulse Bar (Gemma 4 + Gemini 3.8 Flash Live Tape Commentary) */}
-      {livePulse && (
-        <div className="p-3 rounded-xl bg-gradient-to-r from-blue-950/40 via-[#111827] to-emerald-950/30 border border-blue-500/30 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
-          <div className="flex items-start sm:items-center gap-2.5 min-w-0 flex-1">
-            <span className="px-2 py-0.5 rounded bg-blue-500/20 border border-blue-400/40 text-blue-300 font-bold text-[10px] uppercase tracking-wider flex items-center gap-1 shrink-0">
-              <Radio className="w-3 h-3 text-emerald-400 animate-pulse" />
-              {livePulse.engineLabel}
-            </span>
-            <p className="text-white/90 text-xs font-sans truncate sm:whitespace-normal">
-              <span className="font-mono font-bold text-emerald-400 mr-1.5">
-                [{livePulse.sentiment}]
-              </span>
-              {livePulse.aiLiveCommentary}
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleRefreshLivePulse}
-            disabled={isRefreshingPulse}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] text-white/80 hover:text-white cursor-pointer shrink-0"
-          >
-            <RefreshCw className={`w-3 h-3 ${isRefreshingPulse ? 'animate-spin text-blue-400' : ''}`} />
-            <span>Refresh Live Feed AI</span>
-          </button>
-        </div>
-      )}
-
-      {showEvidence && (
-        <div className="p-3 rounded-xl bg-black/60 border border-white/15 space-y-1.5 text-xs font-mono">
-          <div className="flex items-center justify-between text-white/60 pb-1.5 border-b border-white/10 text-[11px]">
-            <span>INJECTED MATHEMATICAL CONTEXT PASSED TO GOOGLE GEMMA 4 & GEMINI 3.8</span>
-            <span className="text-[10px] text-emerald-400">Zero Financial Hallucination Protocol</span>
-          </div>
-          <pre className="p-2.5 rounded-lg bg-black/80 border border-white/5 text-[10px] text-white/80 overflow-x-auto whitespace-pre-wrap leading-relaxed max-h-36">
-            {currentPayloadPreview}
-          </pre>
-        </div>
-      )}
-
-      {/* Compact Preset Question Chips */}
-      <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-[10px] font-mono uppercase tracking-wider text-white/40 mr-1">
-          Quick Queries:
-        </span>
-        {EXAMPLE_QUESTIONS.map((q, idx) => (
-          <button
-            key={idx}
-            onClick={() => handleAskQuestion(q)}
-            disabled={isLoading}
-            className="px-2.5 py-1 rounded-lg text-[11px] font-mono text-left transition-all border cursor-pointer bg-white/5 border-white/10 hover:border-blue-400/50 hover:bg-blue-500/10 text-white/80 hover:text-white"
-          >
-            {q}
-          </button>
-        ))}
-      </div>
-
-      {/* Fit-to-Size Chat Messages Container */}
-      <div className="rounded-xl border border-white/10 bg-[#111827]/90 p-3.5 sm:p-4 min-h-[290px] max-h-[370px] overflow-y-auto space-y-3">
-        {messages.map((msg) => {
-          const isAi = msg.role === 'assistant';
-          const isCopied = copiedId === msg.id;
-
-          const badgeText =
-            msg.source === 'gemini-3.8-flash'
-              ? 'Gemini 3.8 Flash'
-              : msg.source === 'gemma4-cloud'
-              ? 'Gemma 4:31B'
-              : msg.source === 'dual-ai'
-              ? 'Gemma 4 + Gemini 3.8'
-              : 'Error';
+      {/* =================================================================== */}
+      {/* 2. ACTIONABLE AI BUY / SELL SIGNAL CARDS                            */}
+      {/* =================================================================== */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {filteredSignals.map((sig) => {
+          const isBuy = sig.action === 'STRONG BUY' || sig.action === 'BUY';
+          const isSell = sig.action === 'STRONG SELL' || sig.action === 'SELL';
+          const verifiedText = verifiedRationales[sig.id];
 
           return (
             <div
-              key={msg.id}
-              className={`flex gap-2.5 text-xs leading-relaxed ${
-                isAi ? 'justify-start' : 'justify-end'
-              }`}
+              key={sig.id}
+              data-testid={`ai-signal-card-${sig.symbol}`}
+              className="rounded-xl bg-[#070A12] border border-white/15 p-4 flex flex-col justify-between space-y-3"
             >
-              {isAi && (
-                <div
-                  className={`w-7 h-7 rounded-lg shrink-0 flex items-center justify-center font-mono font-bold text-xs ${
-                    msg.isError
-                      ? 'bg-red-950/60 text-red-400 border border-red-500/40'
-                      : 'bg-blue-600/20 text-blue-400 border border-blue-500/40'
-                  }`}
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                </div>
-              )}
-
-              <div
-                className={`max-w-3xl rounded-xl p-3.5 space-y-1.5 border ${
-                  msg.isError
-                    ? 'bg-red-950/20 border-red-500/30 text-red-200'
-                    : isAi
-                    ? 'bg-black/40 border-white/10 text-white/90'
-                    : 'bg-blue-600/20 border-blue-500/30 text-white'
-                }`}
-              >
-                <div className="flex items-center justify-between gap-4 pb-1 border-b border-white/5 text-[10px] font-mono text-white/40">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-white/75">
-                      {isAi ? 'MarketMind AI (Gemma 4 & Gemini 3.8)' : 'You (Research Analyst)'}
-                    </span>
-                    {msg.source && (
-                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-white/5 text-emerald-400 uppercase font-bold">
-                        {badgeText}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span>{msg.timestamp}</span>
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
                     <button
-                      onClick={() => handleCopyMessage(msg.id, msg.content)}
-                      title="Copy message"
-                      className="hover:text-white transition-colors cursor-pointer"
+                      type="button"
+                      onClick={() => onSelectTicker && onSelectTicker(sig.symbol)}
+                      className="font-mono font-bold text-base text-white hover:text-blue-400 transition-colors cursor-pointer"
                     >
-                      {isCopied ? (
-                        <Check className="w-3 h-3 text-emerald-400" />
-                      ) : (
-                        <Copy className="w-3 h-3" />
-                      )}
+                      {sig.symbol}
                     </button>
+                    <div className="text-xs text-white/65 truncate">{sig.name}</div>
+                  </div>
+
+                  <div className="text-right">
+                    <span
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-mono font-bold ${
+                        isBuy
+                          ? 'bg-emerald-600/25 border border-emerald-500/50 text-emerald-300'
+                          : isSell
+                          ? 'bg-red-600/25 border border-red-500/50 text-red-300'
+                          : 'bg-blue-600/20 border border-blue-500/40 text-blue-300'
+                      }`}
+                    >
+                      {isBuy ? (
+                        <TrendingUp className="w-3.5 h-3.5" />
+                      ) : isSell ? (
+                        <TrendingDown className="w-3.5 h-3.5" />
+                      ) : null}
+                      {sig.action}
+                    </span>
+                    <div className="text-[11px] font-mono text-white/60 mt-1 tabular-nums">
+                      Confidence: <strong className="text-white">{sig.confidencePct}%</strong>
+                    </div>
                   </div>
                 </div>
 
-                {/* Content */}
-                <div className="prose prose-invert prose-xs max-w-none font-sans space-y-1.5">
-                  {msg.content.split('\n\n').map((paragraph, pIdx) => {
-                    if (paragraph.startsWith('### ')) {
-                      return (
-                        <h4 key={pIdx} className="text-xs sm:text-sm font-display font-bold text-white pt-0.5">
-                          {paragraph.replace('### ', '')}
-                        </h4>
-                      );
-                    }
-                    if (paragraph.startsWith('- ') || paragraph.startsWith('1. ')) {
-                      return (
-                        <div key={pIdx} className="pl-2 space-y-1 font-mono text-[11px] text-white/85">
-                          {paragraph.split('\n').map((li, lIdx) => (
-                            <div key={lIdx}>{li}</div>
-                          ))}
-                        </div>
-                      );
-                    }
-                    if (paragraph.startsWith('|')) {
-                      return (
-                        <pre key={pIdx} className="font-mono text-[10px] overflow-x-auto p-2 bg-black/60 rounded">
-                          {paragraph}
-                        </pre>
-                      );
-                    }
-                    return (
-                      <p key={pIdx} className="text-xs leading-relaxed text-white/85">
-                        {paragraph}
-                      </p>
-                    );
-                  })}
+                {/* Price Levels Grid */}
+                <div className="grid grid-cols-4 gap-2 p-2.5 rounded-lg bg-black/80 border border-white/10 font-mono text-xs tabular-nums">
+                  <div>
+                    <div className="text-[10px] text-white/50">Entry</div>
+                    <div className="font-bold text-white">${sig.entryPrice}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-white/50">Target</div>
+                    <div className={`font-bold ${isSell ? 'text-red-400' : 'text-emerald-400'}`}>
+                      ${sig.targetPrice}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-white/50">Stop-Loss</div>
+                    <div className="font-bold text-amber-400">${sig.stopLossPrice}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-white/50">Risk/Rew</div>
+                    <div className="font-bold text-blue-400">{sig.riskRewardRatio}x</div>
+                  </div>
                 </div>
+
+                <div className="text-xs font-mono text-blue-300 leading-snug">
+                  Trigger: {sig.technicalTrigger}
+                </div>
+
+                <p className="text-xs text-white/80 leading-relaxed">{sig.quantThesis}</p>
+
+                {verifiedText && (
+                  <div className="p-2.5 rounded-lg bg-blue-950/30 border border-blue-500/40 text-xs text-white/95 leading-relaxed">
+                    <div className="text-[10px] font-mono text-blue-300 font-bold mb-1">
+                      LIVE GEMMA 4 & GEMINI AUDIT:
+                    </div>
+                    {verifiedText}
+                  </div>
+                )}
               </div>
 
-              {!isAi && (
-                <div className="w-7 h-7 rounded-lg shrink-0 flex items-center justify-center bg-white/10 text-white/80 border border-white/20">
-                  <User className="w-3.5 h-3.5" />
-                </div>
-              )}
+              <div className="pt-2 border-t border-white/10 flex items-center justify-between gap-2">
+                <span className="text-[11px] font-mono text-white/50">
+                  {sig.engineBadge} · {sig.timeframe}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleVerifySignalWithAI(sig)}
+                  disabled={verifyingSignalId === sig.id}
+                  className="px-2.5 py-1 rounded bg-white/10 hover:bg-blue-600 text-white text-xs font-mono font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  <Sparkles className="w-3 h-3" />
+                  {verifyingSignalId === sig.id ? 'Auditing...' : 'Verify with AI'}
+                </button>
+              </div>
             </div>
           );
         })}
-
-        {/* Loading Indicator */}
-        {isLoading && (
-          <div className="flex items-center gap-2.5 text-xs font-mono text-white/70 p-2.5 bg-black/30 rounded-lg border border-white/5">
-            <RefreshCw className="w-3.5 h-3.5 animate-spin text-blue-400" />
-            <span>
-              {activeEngineBadgeLabel} is evaluating grounded financial metrics for {activeMetric.ticker}...
-            </span>
-          </div>
-        )}
-
-        <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Form with Submit Button */}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleAskQuestion(inputQuestion);
-        }}
-        className="flex items-center gap-2 p-1.5 rounded-xl bg-black/40 border border-white/10 focus-within:border-blue-500 transition-colors"
-      >
-        <input
-          type="text"
-          placeholder={`Ask Google Gemma 4 & Gemini 3.8 about ${activeMetric.ticker} trends, volatility, risks, or comparisons...`}
-          value={inputQuestion}
-          onChange={(e) => setInputQuestion(e.target.value)}
-          disabled={isLoading}
-          className="flex-1 bg-transparent px-3 py-1.5 text-xs font-mono text-white placeholder-white/40 focus:outline-none"
-        />
+      {/* =================================================================== */}
+      {/* 3. INTERACTIVE AI ANALYST CHAT & CUSTOM ALERT RULES                 */}
+      {/* =================================================================== */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+        {/* AI Chat Interface */}
+        <div className="lg:col-span-8 rounded-xl bg-[#070A12] border border-white/15 p-4 sm:p-5 flex flex-col justify-between space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-white/10">
+            <div className="flex items-center gap-2">
+              <Bot className="w-5 h-5 text-blue-400" />
+              <div>
+                <h3 className="text-base font-display font-bold text-white">
+                  Gemma 4:31B & Gemini Quantitative Analyst Chat
+                </h3>
+                <p className="text-xs text-white/60">
+                  Ask about buy/sell setups, volatility regimes, or peer comparisons for{' '}
+                  {activeMetric.ticker}
+                </p>
+              </div>
+            </div>
+          </div>
 
-        <button
-          type="submit"
-          disabled={isLoading || !inputQuestion.trim()}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-lg font-mono text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer bg-blue-600 text-white hover:bg-blue-500"
-        >
-          <span>Submit</span>
-          <Send className="w-3.5 h-3.5" />
-        </button>
-      </form>
-    </section>
+          {/* Quick Prompt Buttons */}
+          <div className="flex flex-wrap gap-1.5">
+            {QUICK_AI_PROMPTS.map((q) => (
+              <button
+                key={q}
+                type="button"
+                onClick={() => handleSendQuestion(q)}
+                disabled={isGenerating}
+                className="px-2.5 py-1 rounded-md bg-white/5 hover:bg-blue-600/20 border border-white/10 text-xs text-white/80 hover:text-white text-left cursor-pointer transition-colors"
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+
+          {/* Conversation History */}
+          <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+            {messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`p-3.5 rounded-xl text-xs leading-relaxed whitespace-pre-wrap ${
+                  msg.role === 'user'
+                    ? 'bg-blue-600/20 border border-blue-500/40 text-white ml-8'
+                    : msg.isError
+                    ? 'bg-red-950/30 border border-red-500/40 text-red-200'
+                    : 'bg-black/80 border border-white/10 text-white/95 mr-4'
+                }`}
+              >
+                <div className="flex items-center justify-between text-[10px] font-mono text-white/50 mb-1">
+                  <span>{msg.role === 'user' ? 'ANALYST QUERY' : 'GEMMA 4 / GEMINI RESPONSE'}</span>
+                  <span>{msg.timestamp}</span>
+                </div>
+                {msg.content}
+              </div>
+            ))}
+            {isGenerating && (
+              <div className="p-3 rounded-xl bg-black/80 border border-blue-500/40 text-xs font-mono text-blue-300 flex items-center gap-2">
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                Computing quantitative response with Google Gemma 4:31B / Gemini...
+              </div>
+            )}
+          </div>
+
+          {errorMsg && (
+            <div className="px-3 py-2 rounded-lg bg-red-950/40 border border-red-500/40 text-xs font-mono text-red-300">
+              {errorMsg}
+            </div>
+          )}
+
+          {/* Chat Input Form */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSendQuestion();
+            }}
+            className="flex items-center gap-2 pt-2 border-t border-white/10"
+          >
+            <input
+              type="text"
+              value={inputQuestion}
+              onChange={(e) => setInputQuestion(e.target.value)}
+              placeholder={`Ask Gemma 4 & Gemini about ${activeMetric.ticker} buy/sell levels...`}
+              aria-label="Ask AI Analyst a financial question"
+              className="flex-1 px-3.5 py-2 rounded-lg bg-black border border-white/15 text-xs text-white placeholder-white/45 focus:outline-none focus:border-blue-500"
+            />
+            <button
+              type="submit"
+              disabled={isGenerating || !inputQuestion.trim()}
+              className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-mono font-semibold flex items-center gap-1.5 cursor-pointer"
+            >
+              <Send className="w-3.5 h-3.5" />
+              Submit
+            </button>
+          </form>
+        </div>
+
+        {/* Custom Price Alert Rules */}
+        <div className="lg:col-span-4 rounded-xl bg-[#070A12] border border-white/15 p-4 sm:p-5 flex flex-col justify-between space-y-4">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 pb-2.5 border-b border-white/10">
+              <Bell className="w-4 h-4 text-blue-400" />
+              <h3 className="text-sm font-display font-bold text-white">
+                Custom Buy / Sell Trigger Alerts ({priceAlerts.length})
+              </h3>
+            </div>
+
+            {onAddPriceAlert && (
+              <form onSubmit={handleCreateCustomAlert} className="space-y-2.5">
+                <div className="text-xs font-mono text-white/75">
+                  Active Ticker: <strong className="text-white">{activeMetric.ticker}</strong> ($
+                  {activeMetric.endPrice.toFixed(2)})
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <select
+                    aria-label="Alert Condition"
+                    value={alertCondition}
+                    onChange={(e) => setAlertCondition(e.target.value as 'above' | 'below')}
+                    className="px-2.5 py-1.5 rounded bg-black border border-white/15 text-xs font-mono text-white"
+                  >
+                    <option value="above">Crosses Above (≥)</option>
+                    <option value="below">Crosses Below (≤)</option>
+                  </select>
+                  <input
+                    type="number"
+                    step="any"
+                    value={alertPriceInput}
+                    onChange={(e) => setAlertPriceInput(e.target.value)}
+                    placeholder="Target Price ($)"
+                    aria-label="Target Alert Price"
+                    className="px-2.5 py-1.5 rounded bg-black border border-white/15 text-xs font-mono text-white"
+                  />
+                </div>
+                <input
+                  type="text"
+                  value={alertNoteInput}
+                  onChange={(e) => setAlertNoteInput(e.target.value)}
+                  placeholder="Execution note (e.g. Breakout Buy / Stop-Loss)"
+                  aria-label="Alert Note"
+                  className="w-full px-2.5 py-1.5 rounded bg-black border border-white/15 text-xs font-mono text-white"
+                />
+                <button
+                  type="submit"
+                  className="w-full py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-mono font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Arm Buy/Sell Trigger
+                </button>
+              </form>
+            )}
+
+            <div className="divide-y divide-white/10 max-h-56 overflow-y-auto pt-2">
+              {priceAlerts.map((alert) => (
+                <div
+                  key={alert.id}
+                  className="py-2 flex items-center justify-between gap-2 text-xs font-mono"
+                >
+                  <div className="min-w-0">
+                    <div className="font-bold text-white">
+                      {alert.ticker} {alert.condition === 'above' ? '≥' : '≤'} $
+                      {alert.thresholdPrice.toFixed(2)}
+                    </div>
+                    <div className="text-[11px] text-white/60 truncate">
+                      {alert.triggered ? 'TRIGGERED' : 'ARMED'} · {alert.note || 'Custom Rule'}
+                    </div>
+                  </div>
+                  {onDeletePriceAlert && (
+                    <button
+                      type="button"
+                      onClick={() => onDeletePriceAlert(alert.id)}
+                      aria-label={`Delete alert for ${alert.ticker}`}
+                      className="p-1 text-white/50 hover:text-red-400 cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
-

@@ -63,7 +63,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
         particleCount: 35,
         spread: 60,
         origin: { y: 0.8 },
-        colors: ['#3B82F6', '#10B981', '#FFFFFF'],
+        colors: ['#2563EB', '#EF4444', '#FFFFFF'],
       });
     } catch {
       // Ignore confetti error in headless environments
@@ -99,12 +99,12 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
   return (
     <section className="space-y-6">
       {/* Header & Export Actions */}
-      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-white/10">
+      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-white/15">
         <div>
           <div className="flex items-center gap-2">
             <FileText className="w-5 h-5 text-blue-400" />
             <h3 className="text-xl font-display font-bold text-white tracking-tight">
-              AI Financial Research Report ({activeMetric.ticker})
+              Flores Industries AI Financial Research Report ({activeMetric.ticker})
             </h3>
           </div>
           <p className="text-xs font-mono text-white/50 mt-1">
@@ -114,7 +114,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
 
         {/* Action Controls */}
         <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
-          <div className="flex items-center p-1 bg-black/40 rounded-lg border border-white/10 mr-2">
+          <div className="flex items-center p-1 bg-black/60 rounded-lg border border-white/15 mr-2">
             <button
               onClick={() => setViewMode('preview')}
               className={`px-2.5 py-1 rounded flex items-center gap-1 transition-colors cursor-pointer ${
@@ -142,7 +142,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
           <button
             onClick={handleRegenerate}
             disabled={isGenerating}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white transition-colors disabled:opacity-50 cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/15 text-white/80 hover:text-white transition-colors disabled:opacity-50 cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isGenerating ? 'animate-spin' : ''}`} />
             <span>{isGenerating ? 'Generating...' : 'Regenerate'}</span>
@@ -150,9 +150,9 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
 
           <button
             onClick={handleCopy}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/15 text-white/80 hover:text-white transition-colors cursor-pointer"
           >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+            {copied ? <Check className="w-3.5 h-3.5 text-blue-400" /> : <Copy className="w-3.5 h-3.5" />}
             <span>{copied ? 'Copied' : 'Copy'}</span>
           </button>
 
@@ -166,7 +166,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
 
           <button
             onClick={() => handleDownload('txt')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 border border-white/15 text-white transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 border border-red-500 text-white transition-colors cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" />
             <span>.TXT</span>
@@ -175,7 +175,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
           <button
             onClick={handlePrint}
             title="Print or Save PDF"
-            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/15 text-white/70 hover:text-white transition-colors cursor-pointer"
           >
             <Printer className="w-4 h-4" />
           </button>
@@ -183,12 +183,12 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
       </div>
 
       {/* Model & Provenance Tag Banner */}
-      <div className="flex flex-wrap items-center justify-between gap-4 p-3 rounded-lg bg-black/40 border border-white/5 text-xs font-mono text-white/60">
+      <div className="flex flex-wrap items-center justify-between gap-4 p-3 rounded-lg bg-black border border-white/15 text-xs font-mono text-white/60">
         <div className="flex items-center gap-2">
           <Cpu className="w-3.5 h-3.5 text-blue-400" />
           <span>MODEL: <strong>GOOGLE GEMMA 4:31B</strong></span>
           <span>·</span>
-          <span>STATUS: <span className="uppercase text-emerald-400 font-bold">CONNECTED</span></span>
+          <span>STATUS: <span className="uppercase text-blue-400 font-bold">CONNECTED</span></span>
         </div>
         <div>
           <span>PROVENANCE: {currentProvenance}</span>
@@ -197,7 +197,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
 
       {/* Report Canvas */}
       {viewMode === 'raw' ? (
-        <div className="p-6 rounded-xl bg-black/60 border border-white/10">
+        <div className="p-6 rounded-xl bg-black border border-white/15">
           <textarea
             value={reportContent}
             onChange={(e) => setReportContent(e.target.value)}
@@ -206,11 +206,11 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
           />
         </div>
       ) : (
-        <div className="p-8 sm:p-12 rounded-2xl bg-[#111827]/95 border border-white/10 shadow-2xl backdrop-blur-md max-w-4xl mx-auto space-y-8 print:bg-white print:text-black">
+        <div className="p-8 sm:p-12 rounded-2xl bg-[#05070D]/95 border border-white/15 shadow-2xl backdrop-blur-md max-w-4xl mx-auto space-y-8 print:bg-white print:text-black">
           {/* Header block */}
-          <div className="border-b border-white/10 pb-6 space-y-2">
+          <div className="border-b border-white/15 pb-6 space-y-2">
             <div className="flex items-center justify-between text-xs font-mono text-white/50">
-              <span>MARKETMIND AI // INSTITUTIONAL RESEARCH MEMORANDUM</span>
+              <span>FLORES INDUSTRIES // MARKETMIND AI INSTITUTIONAL MEMORANDUM</span>
               <span>GOOGLE GEMMA 4:31B EDITION</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-display font-extrabold text-white tracking-tight">

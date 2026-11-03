@@ -41,6 +41,7 @@ import { AIAnalystSection } from './components/AIAnalystSection';
 import { FinancialAnalyticsSection } from './components/FinancialAnalyticsSection';
 import { RiskAnalysisSection } from './components/RiskAnalysisSection';
 import { ReportSection } from './components/ReportSection';
+import { WatchlistSection } from './components/WatchlistSection';
 import { OllamaSettingsModal } from './components/OllamaSettingsModal';
 import { HacktoberfestModal } from './components/HacktoberfestModal';
 import { UserProfileModal, LocalAccountSession } from './components/UserProfileModal';
@@ -84,9 +85,9 @@ import {
 const DEFAULT_USER_PROFILE: UserProfile = {
   fullName: 'Alex Morgan, CFA',
   roleTitle: 'Managing Director, Quantitative Research',
-  institution: 'MarketMind Global Desk',
+  institution: 'Flores Industries Global Desk',
   email: 'a.morgan@marketmind.ai',
-  avatarInitials: 'AM',
+  avatarInitials: 'FI',
   baseCurrency: 'USD',
   riskMandate: 'BALANCED_QUANT',
   preferredAIEngine: 'dual-gemma-gemini',
@@ -161,7 +162,7 @@ const DEFAULT_OPEN_SOURCES: OpenSourceConnector[] = [
 ];
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<string>('home');
+  const [activeTab, setActiveTab] = useState<string>('terminal');
   const [activeTicker, setActiveTicker] = useState<string>('NVDA');
   const [isLoadingTicker, setIsLoadingTicker] = useState<string | null>(null);
 
@@ -296,7 +297,7 @@ export default function App() {
   // Price & Volume Alerts & Visual Screen Notifications State
   const [priceAlerts, setPriceAlerts] = useState<PriceAlert[]>(() => {
     try {
-      const saved = localStorage.getItem('marketmind_price_alerts_v4');
+      const saved = localStorage.getItem('marketmind_price_alerts_v5');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
@@ -306,7 +307,7 @@ export default function App() {
     }
     const initialNvdaSeries = generateDeterministicDemonstrationData()['NVDA'] || [];
     const lastPt = initialNvdaSeries[initialNvdaSeries.length - 1];
-    const nvdaClose = lastPt?.close || 138;
+    const nvdaClose = lastPt?.close || 185;
     const recent20 = initialNvdaSeries.slice(-20);
     const nvdaAvgVol =
       recent20.length > 0
@@ -319,33 +320,33 @@ export default function App() {
         ticker: 'NVDA',
         metricType: 'price',
         condition: 'above',
-        thresholdPrice: Number((nvdaClose * 1.045).toFixed(2)),
+        thresholdPrice: Number((nvdaClose * 1.18).toFixed(2)),
         initialPriceAtCreation: nvdaClose,
         createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         triggered: false,
-        note: 'Bullish breakout target (+4.5%)',
+        note: 'Bullish breakout target (+18.0%)',
       },
       {
         id: 'default_alert_volume_spike',
         ticker: 'NVDA',
         metricType: 'volume',
         condition: 'above',
-        thresholdPrice: Math.round(nvdaAvgVol * 2.2),
+        thresholdPrice: Math.round(nvdaAvgVol * 4.5),
         initialPriceAtCreation: lastPt?.volume || nvdaAvgVol,
         createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         triggered: false,
-        note: 'Sudden institutional volume spike (≥ 2.2x 20D avg)',
+        note: 'Institutional volume surge (≥ 4.5x 20D avg)',
       },
       {
         id: 'default_alert_below',
         ticker: 'NVDA',
         metricType: 'price',
         condition: 'below',
-        thresholdPrice: Number((nvdaClose * 0.955).toFixed(2)),
+        thresholdPrice: Number((nvdaClose * 0.85).toFixed(2)),
         initialPriceAtCreation: nvdaClose,
         createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         triggered: false,
-        note: 'Support pullback watch (-4.5%)',
+        note: 'Support pullback watch (-15.0%)',
       },
     ];
   });
@@ -791,7 +792,7 @@ export default function App() {
           particleCount: 28,
           spread: 55,
           origin: { x: 0.88, y: 0.88 },
-          colors: ['#3B82F6', '#10B981', '#8B5CF6'],
+          colors: ['#2563EB', '#EF4444', '#FFFFFF'],
         });
       } catch {
         // Ignore confetti error in headless environment
@@ -1030,52 +1031,52 @@ export default function App() {
   const activeOpenSourcesCount = openSources.filter((s) => s.enabled).length;
 
   const sectionTitleMap: Record<string, { title: string; subtitle: string }> = {
-    overview: {
-      title: 'Institutional Market Terminal & Live 1H / 6H Feed',
-      subtitle: 'Real-time tick streaming, 1H & 6H intraday telemetry, and bottom-popping price/volume alerts',
+    terminal: {
+      title: 'Global Multi-Asset Market Terminal & Heatwave',
+      subtitle: 'US Market, Europe, Asia, Crypto, Rates, Commodities, Currencies, Top Movers & Economic Events',
     },
     news: {
-      title: 'Live Global Financial News & Open-Source Connectors',
-      subtitle: 'Multi-exchange dispatches synthesized by Google Gemma 4:31B & Gemini 3.8 Flash',
+      title: 'Global Financial News Wire & Open-Source Intelligence',
+      subtitle: 'The Wall Street Journal, MarketWatch, Yahoo Finance, Bloomberg, Morningstar, Investopedia & Free Open Sources',
     },
     portfolio: {
-      title: 'Institutional Portfolio & Live Unrealized P&L',
-      subtitle: 'Real-time position valuation, cost-basis tracking, and Firebase Cloud persistence',
-    },
-    analyst: {
-      title: 'Google Gemma 4:31B & Gemini 3.8 AI Financial Analyst',
-      subtitle: 'Grounded quantitative reasoning over verified equity series and volatility metrics',
+      title: 'Portfolio & Total Net Worth Balance Sheet',
+      subtitle: 'Overview, Investments, Cash Balance, Liabilities & Recharts Asset Allocation',
     },
     analytics: {
-      title: 'Quantitative Performance & Cross-Asset Benchmarks',
-      subtitle: 'Sharpe ratios, rolling volatility, beta decomposition, and peer group comparison',
+      title: 'Institutional Quantitative Metrics & Risk Lab',
+      subtitle: 'Sharpe/Sortino/Calmar ratios, Annualized Volatility, Value at Risk (VaR), Correlation Matrix & Stress Testing',
     },
-    risk: {
-      title: 'Institutional Risk Lab & Stress Testing',
-      subtitle: 'Parametric Value at Risk (VaR 95%/99%), drawdown profiling, and macro shock scenarios',
+    'ai-alerts': {
+      title: 'AI Buy & Sell Alerts (Powered by Google Gemma 4:31B & Gemini)',
+      subtitle: 'Actionable BUY / SELL / HOLD trade setups, confidence levels, target/stop-loss math & interactive AI Analyst',
     },
-    report: {
-      title: '9-Section Institutional Equity Research Report',
-      subtitle: 'Executive synthesis, bull/bear scenarios, and exportable memorandum',
+    watchlist: {
+      title: 'Multi-Asset Watchlist & Top 20 D3 Performance Heatmap',
+      subtitle: 'Starred securities, relative strength monitoring, and 1-click chart, signal, or report launch',
+    },
+    reports: {
+      title: '9-Section Institutional Financial Research Reports',
+      subtitle: 'Executive Summary, Market Overview, Dataset Analysis, Performance, Volatility, Risks, Bull/Bear & Conclusion',
     },
   };
 
-  const activeSectionMeta = sectionTitleMap[activeTab] || sectionTitleMap.overview;
+  const activeSectionMeta = sectionTitleMap[activeTab] || sectionTitleMap.terminal;
 
   return (
     <div className="min-h-screen relative flex flex-col transition-colors riddle-canvas text-[#F8FAFC] selection:bg-blue-500/30 selection:text-blue-300">
-      {/* On-Screen Visual Price & Volume Alert Notification Stack (Pops from Bottom) */}
+      {/* On-Screen Visual Price & Volume Alert Notification Stack */}
       <PriceAlertNotifications
         notifications={alertNotifications}
         onDismiss={handleDismissNotification}
         onDismissAll={handleDismissAllNotifications}
         onSelectTicker={(ticker) => {
           setActiveTicker(ticker);
-          setActiveTab('overview');
+          setActiveTab('terminal');
         }}
       />
 
-      {/* Top Bar Navigation & Live Streaming Ticker Tape */}
+      {/* Top Dual Live Tickers (News Ticker + Stock Ticker) & Main Navigation Bar */}
       <NavigationHeader
         activeTab={activeTab}
         setActiveTab={(tab) => {
@@ -1098,215 +1099,194 @@ export default function App() {
         triggeredAlertsCount={triggeredAlertsCount}
       />
 
-      {/* Dedicated Home Page ONLY when activeTab === 'home' */}
-      {activeTab === 'home' ? (
-        <main className="flex-1 w-full relative z-10 flex flex-col justify-center">
-          <HeroSection
-            onNavigateTab={(tab) => {
-              setActiveTab(tab);
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            gemmaConfig={gemmaConfig}
-            marketStatus={marketStatus}
-            globalMarkets={globalMarkets}
-            assetSummaries={assetSummaries}
-            activeTicker={activeTicker}
-            onSelectTicker={(ticker, name, sector) => {
-              handleSelectOrAddStock(ticker, name, sector);
-              setActiveTab('overview');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-          />
-        </main>
-      ) : (
-        /* Riddle UI Bento Workspace View for Terminal, Live News, Portfolio, AI Analyst, Quant, Risk, and Reports */
-        <main className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 py-5 relative z-10 space-y-5">
-          {/* Riddle UI Workspace Context Header & Active Equity Bar */}
-          <div className="riddle-panel px-5 py-3.5 flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3 min-w-0">
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('home');
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#131A2A] hover:bg-[#192236] border border-white/[0.08] text-xs font-mono font-medium text-slate-300 hover:text-white transition-all cursor-pointer shrink-0"
-              >
-                <Home className="w-3.5 h-3.5 text-blue-400" />
-                <span>Home</span>
-              </button>
-
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-sm sm:text-base font-display font-bold text-white truncate">
-                    {activeSectionMeta.title}
-                  </h2>
-                </div>
-                <p className="text-[11px] font-mono text-slate-400 truncate">
-                  {activeSectionMeta.subtitle}
-                </p>
-              </div>
-            </div>
-
-            {/* Right Cluster: Active Equity Selector + Analyst Desk Identity */}
-            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#090C15] border border-white/[0.08] text-xs font-mono">
-                <span className="text-slate-400 text-[11px]">ACTIVE EQUITY:</span>
-                <select
-                  aria-label="Active Equity Selector"
-                  value={activeTicker}
-                  onChange={(e) => setActiveTicker(e.target.value)}
-                  className="bg-transparent text-white font-bold focus:outline-none cursor-pointer"
-                >
-                  {assetSummaries.map((a) => (
-                    <option key={a.ticker} value={a.ticker} className="bg-[#0E1320] text-white">
-                      {a.ticker} (${a.endPrice.toFixed(2)})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setIsProfileOpen(true)}
-                className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#131A2A] hover:bg-[#1A2338] border border-white/[0.08] text-xs font-mono text-slate-200 cursor-pointer"
-              >
-                <UserCheck className="w-3.5 h-3.5 text-indigo-400" />
-                <span>{userProfile.fullName}</span>
-                <span className="text-slate-500">· {userProfile.baseCurrency}</span>
-              </button>
-            </div>
+      <main className="flex-1 max-w-[1600px] w-full mx-auto px-3 sm:px-6 py-5 relative z-10 space-y-5">
+        {/* Workspace Context Bar & Active Security Selector */}
+        <div className="rounded-xl bg-[#070A12] border border-white/15 px-4 sm:px-5 py-3 flex flex-wrap items-center justify-between gap-4">
+          <div className="min-w-0">
+            <h2 className="text-sm sm:text-base font-display font-bold text-white truncate">
+              {activeSectionMeta.title}
+            </h2>
+            <p className="text-xs text-white/65 truncate">{activeSectionMeta.subtitle}</p>
           </div>
 
-          {/* Section View Routing */}
-          {activeTab === 'overview' && (
-            <MarketOverview
-              dataPoints={dataPoints}
-              assetSummaries={assetSummaries}
-              activeTicker={activeTicker}
-              setActiveTicker={setActiveTicker}
-              marketStatus={marketStatus}
-              onSelectOrAddStock={handleSelectOrAddStock}
-              isLoadingTicker={isLoadingTicker}
-              onLoadCustomDataset={handleLoadCustomDataset}
-              onResetToDemo={handleResetToDemo}
-              currentProvenance={currentProvenance}
-              priceAlerts={priceAlerts}
-              onAddPriceAlert={handleAddPriceAlert}
-              onDeletePriceAlert={handleDeletePriceAlert}
-              onRearmPriceAlert={handleRearmPriceAlert}
-              onSimulateMarketTick={handleSimulateMarketTick}
-              isAutoStreaming={isAutoStreaming}
-              setIsAutoStreaming={setIsAutoStreaming}
-            />
-          )}
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black border border-white/15 text-xs font-mono">
+              <span className="text-blue-400 font-semibold">ACTIVE ASSET:</span>
+              <select
+                aria-label="Active Equity Selector"
+                value={activeTicker}
+                onChange={(e) => setActiveTicker(e.target.value)}
+                className="bg-transparent text-white font-bold focus:outline-none cursor-pointer"
+              >
+                {assetSummaries.map((a) => (
+                  <option key={a.ticker} value={a.ticker} className="bg-black text-white">
+                    {a.ticker} (${a.endPrice.toFixed(2)})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
 
-          {activeTab === 'news' && activeMetric && (
-            <NewsSection
-              activeTicker={activeTicker}
-              activeMetric={activeMetric}
-              peerMetrics={peerMetrics}
-              onSelectTicker={(ticker) => {
-                handleSelectOrAddStock(ticker);
-              }}
-              openSources={openSources}
-              onAddOpenSource={handleAddOpenSource}
-              onToggleOpenSource={handleToggleOpenSource}
-              onDeleteOpenSource={handleDeleteOpenSource}
-              onUpdateOpenSourceStatus={handleUpdateOpenSourceStatus}
-              selectedEngine={userProfile.preferredAIEngine}
-            />
-          )}
+        {/* Section View Routing */}
+        {(activeTab === 'terminal' || activeTab === 'overview' || activeTab === 'home') && (
+          <MarketOverview
+            dataPoints={dataPoints}
+            assetSummaries={assetSummaries}
+            activeTicker={activeTicker}
+            setActiveTicker={setActiveTicker}
+            marketStatus={marketStatus}
+            onSelectOrAddStock={handleSelectOrAddStock}
+            isLoadingTicker={isLoadingTicker}
+            onLoadCustomDataset={handleLoadCustomDataset}
+            onResetToDemo={handleResetToDemo}
+            currentProvenance={currentProvenance}
+            priceAlerts={priceAlerts}
+            onAddPriceAlert={handleAddPriceAlert}
+            onDeletePriceAlert={handleDeletePriceAlert}
+            onRearmPriceAlert={handleRearmPriceAlert}
+            onSimulateMarketTick={handleSimulateMarketTick}
+            isAutoStreaming={isAutoStreaming}
+            setIsAutoStreaming={setIsAutoStreaming}
+          />
+        )}
 
-          {activeTab === 'portfolio' && (
-            <PortfolioSection
-              assetSummaries={assetSummaries}
-              holdings={portfolioHoldings}
-              onUpdateHolding={handleUpdatePortfolioHolding}
-              onResetHoldings={handleResetPortfolioHoldings}
-              marketStatus={marketStatus}
-              onSimulateMarketTick={handleSimulateMarketTick}
-              isAutoStreaming={isAutoStreaming}
-              setIsAutoStreaming={setIsAutoStreaming}
-              onSelectTickerForTerminal={(ticker) => {
-                setActiveTicker(ticker);
-                setActiveTab('overview');
-              }}
-              onSelectOrAddStock={handleSelectOrAddStock}
-            />
-          )}
+        {activeTab === 'news' && activeMetric && (
+          <NewsSection
+            activeTicker={activeTicker}
+            activeMetric={activeMetric}
+            peerMetrics={peerMetrics}
+            onSelectTicker={(ticker) => {
+              handleSelectOrAddStock(ticker);
+              setActiveTab('terminal');
+            }}
+            openSources={openSources}
+            onAddOpenSource={handleAddOpenSource}
+            onToggleOpenSource={handleToggleOpenSource}
+            onDeleteOpenSource={handleDeleteOpenSource}
+            onUpdateOpenSourceStatus={handleUpdateOpenSourceStatus}
+            selectedEngine={userProfile.preferredAIEngine}
+          />
+        )}
 
-          {activeTab === 'analyst' && activeMetric && (
-            <AIAnalystSection
-              activeMetric={activeMetric}
-              peerMetrics={peerMetrics}
-              gemmaConfig={gemmaConfig}
-              onNavigateToReport={() => setActiveTab('report')}
-            />
-          )}
+        {activeTab === 'portfolio' && (
+          <PortfolioSection
+            assetSummaries={assetSummaries}
+            holdings={portfolioHoldings}
+            onUpdateHolding={handleUpdatePortfolioHolding}
+            onResetHoldings={handleResetPortfolioHoldings}
+            marketStatus={marketStatus}
+            onSimulateMarketTick={handleSimulateMarketTick}
+            isAutoStreaming={isAutoStreaming}
+            setIsAutoStreaming={setIsAutoStreaming}
+            onSelectTickerForTerminal={(ticker) => {
+              setActiveTicker(ticker);
+              setActiveTab('terminal');
+            }}
+            onSelectOrAddStock={handleSelectOrAddStock}
+          />
+        )}
 
-          {activeTab === 'analytics' && activeMetric && (
+        {activeTab === 'analytics' && activeMetric && (
+          <div className="space-y-6">
             <FinancialAnalyticsSection
               activeMetric={activeMetric}
               peerMetrics={peerMetrics}
             />
-          )}
-
-          {activeTab === 'risk' && activeMetric && (
             <RiskAnalysisSection
               activeMetric={activeMetric}
               peerMetrics={peerMetrics}
               allDatasets={dataPoints}
             />
-          )}
+          </div>
+        )}
 
-          {activeTab === 'report' && activeMetric && (
-            <ReportSection
-              activeMetric={activeMetric}
-              peerMetrics={peerMetrics}
-              currentProvenance={currentProvenance}
-            />
-          )}
-        </main>
-      )}
+        {(activeTab === 'ai-alerts' || activeTab === 'analyst') && activeMetric && (
+          <AIAnalystSection
+            activeMetric={activeMetric}
+            peerMetrics={peerMetrics}
+            gemmaConfig={gemmaConfig}
+            onNavigateToReport={() => setActiveTab('reports')}
+            priceAlerts={priceAlerts}
+            onAddPriceAlert={handleAddPriceAlert}
+            onDeletePriceAlert={handleDeletePriceAlert}
+            onSelectTicker={(ticker) => {
+              handleSelectOrAddStock(ticker);
+              setActiveTab('terminal');
+            }}
+          />
+        )}
 
-      {/* Compact Fit-to-Ratio Footer */}
-      <footer className="w-full border-t border-white/10 bg-[#0B0F19] px-4 sm:px-6 py-3 mt-4 relative z-10 text-xs font-mono text-white/50">
-        <div className="max-w-[1440px] mx-auto flex flex-wrap items-center justify-between gap-4">
+        {activeTab === 'watchlist' && (
+          <WatchlistSection
+            assetSummaries={assetSummaries}
+            activeTicker={activeTicker}
+            onSelectTickerForTerminal={(ticker) => {
+              setActiveTicker(ticker);
+              setActiveTab('terminal');
+            }}
+            onSelectTickerForAI={(ticker) => {
+              setActiveTicker(ticker);
+              setActiveTab('ai-alerts');
+            }}
+            onSelectTickerForReport={(ticker) => {
+              setActiveTicker(ticker);
+              setActiveTab('reports');
+            }}
+            onSelectOrAddStock={handleSelectOrAddStock}
+          />
+        )}
+
+        {(activeTab === 'reports' || activeTab === 'report') && activeMetric && (
+          <ReportSection
+            activeMetric={activeMetric}
+            peerMetrics={peerMetrics}
+            currentProvenance={currentProvenance}
+          />
+        )}
+      </main>
+
+      {/* Clean Institutional Footer */}
+      <footer className="w-full border-t border-white/15 bg-black px-4 sm:px-6 py-3 mt-4 relative z-10 text-xs font-mono text-white/70">
+        <div className="max-w-[1600px] mx-auto flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-display font-bold text-white text-xs">MARKETMIND AI</span>
+            <span className="font-display font-bold text-white">MarketMind AI</span>
             <span>·</span>
-            <span className="text-blue-400">Institutional Financial Intelligence Platform</span>
-            <span className="hidden sm:inline text-white/30">·</span>
-            <span className="hidden sm:inline text-[11px] text-white/40">
-              Powered by Google Gemma 4:31B, Google Gemini 3.8 Flash & Firebase Cloud
+            <span>Multi-Asset Institutional Terminal</span>
+            <span>·</span>
+            <span className="text-white/55">
+              Powered by Google Gemma 4:31B (Ollama) & Google Gemini 3.8 Flash
             </span>
           </div>
 
           <div className="flex items-center gap-4">
             <button
+              type="button"
               onClick={() => setIsProfileOpen(true)}
               className="hover:text-white transition-colors cursor-pointer"
             >
-              Analyst Profile ({userProfile.avatarInitials})
+              Profile ({userProfile.avatarInitials})
             </button>
             <button
+              type="button"
               onClick={() => setActiveTab('news')}
               className="hover:text-white transition-colors cursor-pointer"
             >
-              Open-Source Feeds ({activeOpenSourcesCount})
+              News & Open Sources ({activeOpenSourcesCount})
             </button>
             <button
+              type="button"
               onClick={() => setIsHacktoberfestOpen(true)}
               className="hover:text-white transition-colors cursor-pointer"
             >
-              1-Click Launch & GitHub
+              Local Ollama & GitHub Docs
             </button>
             <button
+              type="button"
               onClick={() => setIsSettingsOpen(true)}
               className="hover:text-white transition-colors cursor-pointer"
             >
-              Gemma 4 & Gemini Engine
+              AI Engine Settings
             </button>
           </div>
         </div>

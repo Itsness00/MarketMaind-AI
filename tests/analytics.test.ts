@@ -15,12 +15,27 @@ import {
   getMarketSessionStatus,
   getGlobalMarketsStatus,
   computePortfolioMetrics,
+  computeTopWatchlistHeatmapData,
+  computeHeatmapSectorCounts,
+  classifyHeatmapSector,
+  computeHeatmapTileOpacity,
+  computeHeatmapTooltipPosition,
 } from '../src/utils/analytics.ts';
 import {
   searchMarketStocks,
   generateSeriesForAnyTicker,
   getOrCreateStockInfo,
+  generateDeterministicDemonstrationData,
 } from '../src/data/demonstrationData.ts';
+import {
+  INITIAL_GLOBAL_INSTRUMENTS,
+  INSTITUTIONAL_NEWS_FEED,
+  TOP_ECONOMIC_EVENTS,
+  filterGlobalInstruments,
+  computeMarketMovers,
+  computeNetWorthSummary,
+  computeAITradingSignals,
+} from '../src/data/globalMarketsData.ts';
 import { MarketDataPoint, PriceAlert } from '../src/types/market.ts';
 
 describe('Financial Analytics, Live Market Hours & Universal Stock Coverage', () => {
@@ -235,6 +250,177 @@ describe('Financial Analytics, Live Market Hours & Universal Stock Coverage', ()
     assert.strictEqual(summary.positions[1].unrealizedPnL, -100);
     assert.strictEqual(summary.positions[1].allocationWeightPct, 37.5);
   });
+
+  it('computes top 20 watchlist heatmap nodes with positive (green) and negative (red) performance classification', () => {
+    const demoData = generateDeterministicDemonstrationData();
+    const tickers = Object.keys(demoData);
+    assert.strictEqual(tickers.length, 20);
+
+    const summaries = tickers.map((t) => computeAssetMetrics(demoData[t]));
+    const heatmapNodes = computeTopWatchlistHeatmapData(summaries, 'total', 20, 'magnitude');
+
+    assert.strictEqual(heatmapNodes.length, 20);
+    // Verify both positive and negative performers exist
+    const positiveCount = heatmapNodes.filter((n) => n.isPositive).length;
+    const negativeCount = heatmapNodes.filter((n) => !n.isPositive).length;
+    assert.ok(positiveCount > 0, 'Expected positive performance tickers for green heatmap cells');
+    assert.ok(negativeCount > 0, 'Expected negative performance tickers for red heatmap cells');
+
+    // Verify sorted by descending |priceChangePct| magnitude
+    for (let i = 1; i < heatmapNodes.length; i++) {
+      assert.ok(Math.abs(heatmapNodes[i - 1].priceChangePct) >= Math.abs(heatmapNodes[i].priceChangePct));
+      assert.ok(heatmapNodes[i].weightValue > 0);
+    }
+
+    // Verify sector counts & sector filtering (Tech, Healthcare, Energy)
+    const sectorCounts = computeHeatmapSectorCounts(summaries);
+    assert.strictEqual(sectorCounts.ALL, 20);
+    assert.ok(sectorCounts.Tech >= 8, 'Expected Tech tickers in default watchlist');
+    assert.ok(sectorCounts.Healthcare >= 3, 'Expected Healthcare tickers (LLY, UNH, JNJ) in default watchlist');
+    assert.ok(sectorCounts.Energy >= 2, 'Expected Energy tickers (XOM, CVX) in default watchlist');
+
+    const techNodes = computeTopWatchlistHeatmapData(summaries, 'total', 20, 'magnitude', {
+      sectorFilter: 'Tech',
+      colorMetric: 'priceChange',
+    });
+    assert.strictEqual(techNodes.length, sectorCounts.Tech);
+    assert.ok(techNodes.every((n) => n.sectorGroup === 'Tech'));
+
+    const healthcareNodes = computeTopWatchlistHeatmapData(summaries, 'total', 20, 'magnitude', {
+      sectorFilter: 'Healthcare',
+      colorMetric: 'priceChange',
+    });
+    assert.strictEqual(healthcareNodes.length, sectorCounts.Healthcare);
+    assert.ok(healthcareNodes.every((n) => n.sectorGroup === 'Healthcare'));
+
+    const energyNodes = computeTopWatchlistHeatmapData(summaries, 'total', 20, 'magnitude', {
+      sectorFilter: 'Energy',
+      colorMetric: 'priceChange',
+    });
+    assert.strictEqual(energyNodes.length, sectorCounts.Energy);
+    assert.ok(energyNodes.every((n) => n.sectorGroup === 'Energy'));
+
+    // Verify volatility coloring/sorting mode
+    const volNodes = computeTopWatchlistHeatmapData(summaries, 'total', 20, 'magnitude', {
+      sectorFilter: 'ALL',
+      colorMetric: 'volatility',
+    });
+    assert.strictEqual(volNodes.length, 20);
+    for (let i = 1; i < volNodes.length; i++) {
+      assert.ok(volNodes[i - 1].volatilityPct >= volNodes[i].volatilityPct);
+      assert.ok(['LOW', 'MODERATE', 'HIGH'].includes(volNodes[i].volatilityRegime));
+    }
+
+    assert.strictEqual(classifyHeatmapSector('Pharmaceuticals & Biotech', 'LLY'), 'Healthcare');
+    assert.strictEqual(classifyHeatmapSector('Integrated Oil & Gas', 'XOM'), 'Energy');
+    assert.strictEqual(classifyHeatmapSector('Semiconductors & AI', 'NVDA'), 'Tech');
+
+    // Verify smooth hover opacity increase (resting 0.82 -> hovered 1.0, non-hovered dimmed to 0.72)
+    const restingOpacity = computeHeatmapTileOpacity('AAPL', null, 'NVDA');
+    const hoveredOpacity = computeHeatmapTileOpacity('AAPL', 'AAPL', 'NVDA');
+    const siblingDimmedOpacity = computeHeatmapTileOpacity('MSFT', 'AAPL', 'NVDA');
+
+    assert.ok(hoveredOpacity.fillOpacity > restingOpacity.fillOpacity);
+    assert.strictEqual(hoveredOpacity.fillOpacity, 1.0);
+    assert.strictEqual(hoveredOpacity.strokeOpacity, 1.0);
+    assert.ok(hoveredOpacity.highlightOverlayOpacity > 0);
+    assert.ok(siblingDimmedOpacity.fillOpacity < restingOpacity.fillOpacity);
+
+    // Verify tooltip position clamping within D3 container bounds
+    const posNormal = computeHeatmapTooltipPosition(100, 80, 960, 420, 276, 196);
+    assert.strictEqual(posNormal.left, 114);
+    assert.strictEqual(posNormal.top, 94);
+
+    const posRightBottomEdge = computeHeatmapTooltipPosition(920, 390, 960, 420, 276, 196);
+    assert.ok(posRightBottomEdge.left + 276 <= 960);
+    assert.ok(posRightBottomEdge.top + 196 <= 420);
+  });
+
+  it('supports all 7 global market classes, trending/gainers/losers, economic events, and major news publishers', () => {
+    const requiredCategories = [
+      'US_MARKET',
+      'EUROPE_MARKET',
+      'ASIA_MARKET',
+      'CRYPTO',
+      'RATES',
+      'COMMODITIES',
+      'CURRENCIES',
+    ] as const;
+
+    for (const cat of requiredCategories) {
+      const filtered = filterGlobalInstruments(INITIAL_GLOBAL_INSTRUMENTS, cat);
+      assert.ok(filtered.length >= 5, `Expected at least 5 instruments for ${cat}`);
+    }
+
+    const { trending, topGainers, topLosers } = computeMarketMovers(INITIAL_GLOBAL_INSTRUMENTS, 5);
+    assert.strictEqual(trending.length, 5);
+    assert.strictEqual(topGainers.length, 5);
+    assert.strictEqual(topLosers.length, 5);
+    assert.ok(topGainers[0].changePct >= topGainers[4].changePct);
+    assert.ok(topLosers[0].changePct <= topLosers[4].changePct);
+    assert.ok(TOP_ECONOMIC_EVENTS.length >= 6);
+
+    const requiredSources = [
+      'The Wall Street Journal',
+      'MarketWatch',
+      'Yahoo Finance',
+      'Bloomberg',
+      'Morningstar',
+      'Investopedia',
+      'Open Source Wire',
+    ];
+    for (const src of requiredSources) {
+      assert.ok(
+        INSTITUTIONAL_NEWS_FEED.some((n) => n.source === src),
+        `Expected news articles from ${src}`
+      );
+    }
+  });
+
+  it('computes Net Worth (Investments + Cash Balance - Liabilities) and AI Buy/Sell signals accurately', () => {
+    const nw = computeNetWorthSummary(
+      500000,
+      400000,
+      5000,
+      [
+        {
+          id: 'c1',
+          accountName: 'Treasury Sweep',
+          institution: 'JPM',
+          accountType: 'TREASURY_SWEEP',
+          currency: 'USD',
+          balance: 100000,
+          apyPct: 5.0,
+          updatedAt: 'Now',
+        },
+      ],
+      [
+        {
+          id: 'l1',
+          name: 'Margin Facility',
+          lender: 'IBKR',
+          category: 'MARGIN_LOAN',
+          balance: 150000,
+          aprPct: 6.0,
+          monthlyPayment: 750,
+          dueDateLabel: 'Monthly',
+        },
+      ]
+    );
+
+    assert.strictEqual(nw.totalAssets, 600000); // 500k + 100k
+    assert.strictEqual(nw.totalLiabilities, 150000);
+    assert.strictEqual(nw.netWorth, 450000); // 600k - 150k
+    assert.strictEqual(nw.annualCashYieldEstimate, 5000); // 5% of 100k
+    assert.strictEqual(nw.debtToAssetRatioPct, 25); // 150k / 600k
+
+    const signals = computeAITradingSignals(INITIAL_GLOBAL_INSTRUMENTS);
+    assert.ok(signals.length >= 10);
+    assert.ok(signals.some((s) => s.action === 'STRONG BUY' || s.action === 'BUY'));
+    assert.ok(signals.some((s) => s.action === 'STRONG SELL' || s.action === 'SELL'));
+  });
 });
+
+
 
 

@@ -286,19 +286,19 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
       <div className="riddle-panel max-w-3xl w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         {/* Modal Header */}
-        <div className="px-6 py-4 bg-[#090C15] border-b border-white/[0.08] flex items-center justify-between">
+        <div className="px-6 py-4 bg-black border-b border-white/15 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-300 font-mono font-bold text-sm">
-              {formState.avatarInitials || 'MM'}
+            <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-white font-mono font-bold text-sm">
+              {formState.avatarInitials || 'FI'}
             </div>
             <div>
               <h2 className="text-base font-display font-bold text-white flex items-center gap-2">
-                Account, Custom Device APIs & Cloud Identity
-                <span className="px-2 py-0.5 rounded-md bg-emerald-950/80 border border-emerald-500/40 text-[10px] font-mono text-emerald-300">
+                Flores Industries Account, Custom Device APIs & Cloud Identity
+                <span className="px-2 py-0.5 rounded-md bg-blue-950/80 border border-blue-500/40 text-[10px] font-mono text-blue-300">
                   {isAuthenticated ? `${activeProviderLabel} · ACTIVE` : 'CREATE ACCOUNT / SIGN IN'}
                 </span>
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-white/60">
                 Create an account or log in exclusively with your Email Address, GitHub, or Google, and connect APIs or open sources from your own device.
               </p>
             </div>
@@ -308,14 +308,14 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
             type="button"
             onClick={onClose}
             aria-label="Close Account Modal"
-            className="p-1.5 rounded-xl bg-[#131A2A] hover:bg-[#1B2438] text-slate-400 hover:text-white border border-white/[0.08] cursor-pointer"
+            className="p-1.5 rounded-xl bg-[#070A12] hover:bg-red-950/60 text-white/60 hover:text-white border border-white/15 cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Sub-navigation inside Modal */}
-        <div className="px-6 pt-3 bg-[#0B0F1A] border-b border-white/[0.08] flex flex-wrap items-center justify-between gap-2">
+        <div className="px-6 pt-3 bg-[#05070D] border-b border-white/15 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2 overflow-x-auto">
             <button
               type="button"
@@ -323,7 +323,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
               className={`px-3.5 py-2 text-xs font-mono border-b-2 transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
                 activeModalTab === 'account'
                   ? 'border-blue-500 text-white font-bold'
-                  : 'border-transparent text-slate-400 hover:text-slate-200'
+                  : 'border-transparent text-white/60 hover:text-white'
               }`}
             >
               <KeyRound className="w-3.5 h-3.5 text-blue-400" />
@@ -335,10 +335,10 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
               className={`px-3.5 py-2 text-xs font-mono border-b-2 transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
                 activeModalTab === 'sources'
                   ? 'border-blue-500 text-white font-bold'
-                  : 'border-transparent text-slate-400 hover:text-slate-200'
+                  : 'border-transparent text-white/60 hover:text-white'
               }`}
             >
-              <Database className="w-3.5 h-3.5 text-emerald-400" />
+              <Database className="w-3.5 h-3.5 text-red-400" />
               Device APIs & Open Sources ({openSources.filter((s) => s.enabled).length})
             </button>
             <button
@@ -347,10 +347,10 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
               className={`px-3.5 py-2 text-xs font-mono border-b-2 transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
                 activeModalTab === 'profile'
                   ? 'border-blue-500 text-white font-bold'
-                  : 'border-transparent text-slate-400 hover:text-slate-200'
+                  : 'border-transparent text-white/60 hover:text-white'
               }`}
             >
-              <UserIcon className="w-3.5 h-3.5 text-indigo-400" />
+              <UserIcon className="w-3.5 h-3.5 text-white" />
               Analyst Desk Profile
             </button>
           </div>
@@ -363,7 +363,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                   setAuthError('');
                   await onSignOutAll();
                 }}
-                className="px-3 py-1 rounded-xl bg-rose-950/50 hover:bg-rose-900/60 border border-rose-500/40 text-[11px] font-mono text-rose-200 flex items-center gap-1.5 cursor-pointer"
+                className="px-3 py-1 rounded-xl bg-red-950/60 hover:bg-red-900/70 border border-red-500/40 text-[11px] font-mono text-red-200 flex items-center gap-1.5 cursor-pointer"
               >
                 <LogOut className="w-3 h-3" />
                 Sign Out ({activeEmail.split('@')[0]})
@@ -373,21 +373,21 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
         </div>
 
         {authError && (
-          <div className="mx-6 mt-3 px-3.5 py-2.5 rounded-xl bg-amber-950/60 border border-amber-500/40 text-amber-200 text-xs font-mono">
+          <div className="mx-6 mt-3 px-3.5 py-2.5 rounded-xl bg-red-950/60 border border-red-500/40 text-red-200 text-xs font-mono">
             {authError}
           </div>
         )}
 
         {authNotice && (
-          <div className="mx-6 mt-3 px-3.5 py-2.5 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-200 text-xs font-mono flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <div className="mx-6 mt-3 px-3.5 py-2.5 rounded-xl bg-blue-950/60 border border-blue-500/40 text-blue-200 text-xs font-mono flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />
             <span>{authNotice}</span>
           </div>
         )}
 
         {savedBanner && (
-          <div className="mx-6 mt-3 px-3.5 py-2.5 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-xs font-mono flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <div className="mx-6 mt-3 px-3.5 py-2.5 rounded-xl bg-blue-950/60 border border-blue-500/40 text-blue-200 text-xs font-mono flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />
             <span>{savedBanner}</span>
           </div>
         )}
@@ -398,14 +398,14 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
             {/* Active Account Status Banner */}
             <div className="riddle-card p-4 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
+                <ShieldCheck className="w-5 h-5 text-blue-400 shrink-0" />
                 <div>
                   <div className="text-xs font-mono font-bold text-white">
                     {isAuthenticated
                       ? `Signed In as ${activeEmail} (${activeProviderLabel})`
                       : 'Create an Account or Sign In to Sync Across Your Devices'}
                   </div>
-                  <div className="text-[11px] font-mono text-slate-400">
+                  <div className="text-[11px] font-mono text-white/60">
                     Supported login providers: Email Address, GitHub, or Google · Cloud SQL + Firebase Auth
                   </div>
                 </div>
@@ -568,9 +568,9 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                         );
                       }
                     }}
-                    className="w-full py-2.5 px-4 rounded-xl bg-indigo-600/25 hover:bg-indigo-600/35 border border-indigo-500/40 text-xs font-mono font-bold text-indigo-100 flex items-center justify-center gap-2.5 transition-all cursor-pointer"
+                    className="w-full py-2.5 px-4 rounded-xl bg-blue-600/25 hover:bg-blue-600/35 border border-blue-500/40 text-xs font-mono font-bold text-white flex items-center justify-center gap-2.5 transition-all cursor-pointer"
                   >
-                    <LogIn className="w-4 h-4 text-indigo-300" />
+                    <LogIn className="w-4 h-4 text-blue-300" />
                     <span>Continue with Google</span>
                   </button>
                 </div>
@@ -600,7 +600,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
             <div className="riddle-card p-3.5 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <div className="text-xs font-mono font-bold text-white flex items-center gap-2">
-                  <Laptop className="w-4 h-4 text-emerald-400" />
+                  <Laptop className="w-4 h-4 text-blue-400" />
                   <span>Connect Custom APIs or Open Sources from Your Own Device</span>
                 </div>
                 <p className="text-[11px] font-mono text-slate-400 mt-0.5">
@@ -622,7 +622,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                 <button
                   type="button"
                   onClick={handleExportDeviceConfigFile}
-                  className="px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-xs font-mono text-emerald-300 flex items-center gap-1.5 cursor-pointer"
+                  className="px-3 py-1.5 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 text-xs font-mono text-blue-300 flex items-center gap-1.5 cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Save APIs to Device</span>
@@ -730,7 +730,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                       onClick={() => onToggleOpenSource(src.id)}
                       className={`px-3 py-1 rounded-lg text-xs font-mono border cursor-pointer ${
                         src.enabled
-                          ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300'
+                          ? 'bg-blue-950/60 border-blue-500/40 text-blue-300'
                           : 'bg-[#131A2A] border-white/10 text-slate-400'
                       }`}
                     >
@@ -741,7 +741,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                         type="button"
                         onClick={() => onDeleteOpenSource(src.id)}
                         title="Remove custom API source"
-                        className="p-1.5 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/30 text-rose-300 cursor-pointer"
+                        className="p-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/60 border border-red-500/30 text-red-300 cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>

@@ -22,16 +22,16 @@
   }
 }
 
-/* BD Emerson (Awwwards) Architectural Design System & Surface Utilities */
+/* Flores Industries Architectural Design System — Blue, Black, Red & White Palette */
 :root {
-  --bg-canvas: #06080E;
-  --bg-surface: #0B0F19;
-  --bg-elevated: #111726;
-  --bg-contrast-light: #F3F6FA;
-  --border-subtle: rgba(255, 255, 255, 0.09);
-  --border-active: rgba(56, 189, 248, 0.5);
-  --text-primary: #F8FAFC;
-  --text-secondary: #94A3B8;
+  --bg-canvas: #030407;
+  --bg-surface: #07090F;
+  --bg-elevated: #0B0F1A;
+  --bg-contrast-light: #FFFFFF;
+  --border-subtle: rgba(255, 255, 255, 0.14);
+  --border-active: rgba(37, 99, 235, 0.65);
+  --text-primary: #FFFFFF;
+  --text-secondary: #CBD5E1;
 }
 
 body {
@@ -40,44 +40,44 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* BD Emerson Isometric & Architectural Hairline Grid Canvas */
+/* Flores Industries Isometric & Architectural Hairline Grid Canvas (Black, Blue, Red, White) */
 .riddle-canvas {
-  background-color: #06080E;
+  background-color: #030407;
   background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    radial-gradient(circle at 18% 0%, rgba(37, 99, 235, 0.11), transparent 42%),
-    radial-gradient(circle at 82% 10%, rgba(14, 165, 233, 0.08), transparent 38%);
+    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    radial-gradient(circle at 16% 0%, rgba(37, 99, 235, 0.16), transparent 44%),
+    radial-gradient(circle at 84% 12%, rgba(220, 38, 38, 0.12), transparent 40%);
   background-size: 64px 64px, 64px 64px, 100% 100%, 100% 100%;
 }
 
 .riddle-panel {
-  background-color: rgba(11, 15, 25, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06), 0 14px 34px -12px rgba(0, 0, 0, 0.65);
+  background-color: rgba(7, 9, 15, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08), 0 14px 34px -12px rgba(0, 0, 0, 0.8);
   border-radius: 0.875rem;
   backdrop-filter: blur(12px);
 }
 
 .riddle-card {
-  background-color: #101624;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.04);
+  background-color: #090C15;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
   border-radius: 0.75rem;
 }
 
-/* BD Emerson High-Contrast Alabaster Architectural Band */
+/* Flores Industries Pure White High-Contrast Architectural Band */
 .bd-contrast-panel {
-  background-color: #F4F7FB;
-  color: #090D16;
-  border: 1px solid rgba(15, 23, 42, 0.12);
+  background-color: #FFFFFF;
+  color: #030407;
+  border: 2px solid #2563EB;
   border-radius: 0.875rem;
-  box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.55);
 }
 
 .riddle-pill-group {
-  background-color: #06080E;
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  background-color: #030407;
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 0.75rem;
   padding: 0.25rem;
 }
